@@ -97,7 +97,7 @@ public class Terrain {
 					Vector3f.add(Vector3f.cross(right, top, null), sum, sum);
 				
 				// add normalisation
-				ns[z][x] = sum;
+				ns[z][x] = sum.normalise(sum);
 			}
 	}
 }

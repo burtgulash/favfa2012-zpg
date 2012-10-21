@@ -15,7 +15,7 @@ import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 
 public class Main {
-	private static final float MOVEMENT_SPEED = 80f;
+	private static final float MOVEMENT_SPEED = 10f;
 	private static final float CAM_HEIGHT = 1.85f;
 	private static final double DAY_LENGTH = 12d;
 	
@@ -39,7 +39,6 @@ public class Main {
 	static float v_invert = 1f;
 	static long v_invert_lock = 0;
 	
-	static int rr, cc;
 	static float sun_angle = 0f;
 	static float sun_intensity = 0f;
 	static double day_time = 0f;
@@ -101,18 +100,40 @@ public class Main {
 		
 	}
 	
+	private static float getY(float x, float z) {
+		int cc = (int) ((x / METRES_PER_FLOAT) + t.getW() / 2);
+		int rr = (int) ((z / METRES_PER_FLOAT) + t.getH() / 2);
+		float rdx = (float) (cc - t.getW() / 2) * METRES_PER_FLOAT;
+		float rdz = (float) (rr - t.getW() / 2) * METRES_PER_FLOAT;
+		
+		Vector3f b = new Vector3f(rdx, t.getHeight(cc, rr), rdz);
+		Vector3f c = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr + 1), rdz + METRES_PER_FLOAT);
+		Vector3f cmb = Vector3f.sub(c, b, null);
+		Vector3f v;
+		
+		if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
+			v = new Vector3f(x, t.getHeight(cc, rr + 1), z + METRES_PER_FLOAT);
+		else
+			// TODO negate?
+			v = new Vector3f(x + METRES_PER_FLOAT, t.getHeight(cc + 1, rr), z).negate(null);
+		
+		Vector3f vmb = Vector3f.sub(v, b, null);
+		Vector3f n = Vector3f.cross(vmb, cmb, null);
+		float y = (Vector3f.dot(n, b) - n.x * x - n.z * z) / n.y;
+		
+		
+		return y;
+	}
+	
+	static Vector3f p = new Vector3f(0,0,0);
+	static boolean g = false;
+	
 	private static void render() {
 		float si = getSunIntensity();
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// glClearColor(.85f, .85f, 1f, 1f);
 		
-		rr = (int) ((-cam_x / METRES_PER_FLOAT) + t.getW() / 2);
-		cc = (int) ((-cam_z / METRES_PER_FLOAT) + t.getH() / 2);
-		try {
-			cam_y = -(CAM_HEIGHT + t.getHeight(cc, rr));
-		} catch (ArrayIndexOutOfBoundsException e) {
-		}
 		
 		// Perspective transformations
 		glMatrixMode(GL_PROJECTION);
@@ -120,6 +141,12 @@ public class Main {
 		gluPerspective(80f, (float) Display.getWidth() / (float) Display.getHeight(), .001f, 700f);
 		
 		
+		int cc = (int) ((-cam_x / METRES_PER_FLOAT) + t.getW() / 2);
+		int rr = (int) ((-cam_z / METRES_PER_FLOAT) + t.getH() / 2);
+		try {
+			cam_y = -(CAM_HEIGHT + t.getHeight(cc, rr));
+		} catch (ArrayIndexOutOfBoundsException e) {
+		}
 		
 		// Modelview transformations
 		glMatrixMode(GL_MODELVIEW);
@@ -128,9 +155,33 @@ public class Main {
 		glRotatef(azimuth, 0, 1, 0);
 		glTranslatef(cam_x, cam_y, cam_z);
 		
+		cc = (int) ((p.x / METRES_PER_FLOAT) + t.getW() / 2);
+		rr = (int) ((p.z / METRES_PER_FLOAT) + t.getH() / 2);
+		// p.y = 2f + t.getHeight(cc, rr);
+		p.y = 2f + getY(p.x, p.z);
+		if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD8))
+			p.z += speed;
+		if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD2))
+			p.z -= speed;
+		if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD6))
+			p.x -= speed;
+		if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD4))
+			p.x += speed;
+			
+		
+		// TODO DEBUG point
+			glDisable(GL_LIGHTING);
+			glColor3f(1,0,0);
+			glBegin(GL_POINTS);
+				glVertex3f(p.x, p.y, p.z);
+			glEnd();
+			glEnable(GL_LIGHTING);
+		
+		
+		
 		// Ambient light
 		// float ambInt = Math.max(.1f, si * .7f);
-		float ambInt = .1f;
+		float ambInt = .5f;
 		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[]{ambInt, ambInt, ambInt, 1f}));
 		glLight(GL_LIGHT1, GL_POSITION, asFloatBuffer(new float[]{100f, 100f, 100f, 1f}));
 		
@@ -141,6 +192,7 @@ public class Main {
 		glPushMatrix();
 		glRotatef(sun_angle, 0f, 0f, 1f);
 		
+		// TODO POKUS begin
 		glPointSize(20f);
 		glDisable(GL_LIGHTING);
 		glColor3f(1f, 1f, 0f);
@@ -148,6 +200,7 @@ public class Main {
 			glVertex3f(0f, max_x + 200f, 0f);
 		glEnd();
 		glEnable(GL_LIGHTING);
+		// TODO POKUS end
 		
 		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[]{si, si, .85f * si, 1f}));
 		glLight(GL_LIGHT0, GL_POSITION, asFloatBuffer(new float[]{0f, max_x + 200f, 0f, 1f}));
@@ -165,16 +218,16 @@ public class Main {
 				Vector3f n;
 				
 				x = (float) (c - t.getW() / 2) * METRES_PER_FLOAT;
-				y = t.getHeight(r, c);
+				y = t.getHeight(c, r);
 				z = (float) (r - t.getH() / 2) * METRES_PER_FLOAT;
-				n = t.getNormal(r, c);
+				n = t.getNormal(c, r);
 				
 				glNormal3f(n.x, n.y, n.z);
 				glVertex3f(x, y, z);
 				
-				y = t.getHeight(r + 1, c);
+				y = t.getHeight(c, r + 1);
 				z += METRES_PER_FLOAT;
-				n = t.getNormal(r + 1, c);
+				n = t.getNormal(c, r + 1);
 				
 				glNormal3f(n.x, n.y, n.z);
 				glVertex3f(x, y, z);
