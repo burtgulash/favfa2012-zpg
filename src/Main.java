@@ -106,23 +106,20 @@ public class Main {
 		float rdx = (float) (cc - t.getW() / 2) * METRES_PER_FLOAT;
 		float rdz = (float) (rr - t.getW() / 2) * METRES_PER_FLOAT;
 		
-		Vector3f b = new Vector3f(rdx, t.getHeight(cc, rr), rdz);
-		Vector3f c = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr + 1), rdz + METRES_PER_FLOAT);
+		Vector3f b = new Vector3f(rdx, t.getHeight(cc, rr + 1), rdz + METRES_PER_FLOAT);
+		Vector3f c = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr), rdz);
 		Vector3f cmb = Vector3f.sub(c, b, null);
 		Vector3f v;
 		
-		if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
-			v = new Vector3f(x, t.getHeight(cc, rr + 1), z + METRES_PER_FLOAT);
+		// if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
+		if (x - b.x > z - b.z)
+			v = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr + 1), rdz + METRES_PER_FLOAT);
 		else
-			// TODO negate?
-			v = new Vector3f(x + METRES_PER_FLOAT, t.getHeight(cc + 1, rr), z).negate(null);
+			v = new Vector3f(rdx, t.getHeight(cc, rr), rdz);
 		
 		Vector3f vmb = Vector3f.sub(v, b, null);
 		Vector3f n = Vector3f.cross(vmb, cmb, null);
-		float y = (Vector3f.dot(n, b) - n.x * x - n.z * z) / n.y;
-		
-		
-		return y;
+		return (Vector3f.dot(n, b) - n.x * x - n.z * z) / n.y;
 	}
 	
 	static Vector3f p = new Vector3f(0,0,0);
@@ -140,11 +137,8 @@ public class Main {
 		glLoadIdentity();
 		gluPerspective(80f, (float) Display.getWidth() / (float) Display.getHeight(), .001f, 700f);
 		
-		
-		int cc = (int) ((-cam_x / METRES_PER_FLOAT) + t.getW() / 2);
-		int rr = (int) ((-cam_z / METRES_PER_FLOAT) + t.getH() / 2);
 		try {
-			cam_y = -(CAM_HEIGHT + t.getHeight(cc, rr));
+			cam_y = -(CAM_HEIGHT + getY(-cam_x, -cam_z));
 		} catch (ArrayIndexOutOfBoundsException e) {
 		}
 		
@@ -154,28 +148,6 @@ public class Main {
 		glRotatef(-altitude, v_invert * 1f, 0f, 0f);
 		glRotatef(azimuth, 0, 1, 0);
 		glTranslatef(cam_x, cam_y, cam_z);
-		
-		cc = (int) ((p.x / METRES_PER_FLOAT) + t.getW() / 2);
-		rr = (int) ((p.z / METRES_PER_FLOAT) + t.getH() / 2);
-		// p.y = 2f + t.getHeight(cc, rr);
-		p.y = 2f + getY(p.x, p.z);
-		if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD8))
-			p.z += speed;
-		if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD2))
-			p.z -= speed;
-		if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD6))
-			p.x -= speed;
-		if(Keyboard.isKeyDown(Keyboard.KEY_NUMPAD4))
-			p.x += speed;
-			
-		
-		// TODO DEBUG point
-			glDisable(GL_LIGHTING);
-			glColor3f(1,0,0);
-			glBegin(GL_POINTS);
-				glVertex3f(p.x, p.y, p.z);
-			glEnd();
-			glEnable(GL_LIGHTING);
 		
 		
 		
