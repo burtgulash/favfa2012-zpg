@@ -15,9 +15,10 @@ import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 
 public class Main {
-	private static final float MOVEMENT_SPEED = 10f;
+	private static final float MOVEMENT_SPEED = 3f;
 	private static final float CAM_HEIGHT = 1.85f;
-	private static final double DAY_LENGTH = 12d;
+	private static final double DAY_LENGTH = 120d;
+	private static final float SUN_DISTANCE = 500f;
 	
 	private static final float METRES_PER_FLOAT = 2f;
 	private static long lastFrameTime;
@@ -30,7 +31,7 @@ public class Main {
 	static float azimuth = 0;
 	static boolean w, s, a, d;
 	static float cam_x = 0, cam_y = 0, cam_z = 0;
-	static float speed = 3f;
+	static float speed = 0;
 	
 	static final float MAX_LOOK_UP = 90f, MAX_LOOK_DOWN = -90f;
 	
@@ -45,7 +46,8 @@ public class Main {
 	
 	
 	private static float getSunIntensity() {
-		double sin = Math.sin(day_time * Math.PI * 2d);
+		// -.5f -> center on midday
+		double sin = Math.sin(day_time * Math.PI - .5d);
 		return (float) Math.max(0d, sin * sin * sin);
 	}
 	
@@ -153,7 +155,7 @@ public class Main {
 		
 		// Ambient light
 		// float ambInt = Math.max(.1f, si * .7f);
-		float ambInt = .5f;
+		float ambInt = .1f;
 		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[]{ambInt, ambInt, ambInt, 1f}));
 		glLight(GL_LIGHT1, GL_POSITION, asFloatBuffer(new float[]{100f, 100f, 100f, 1f}));
 		
@@ -169,13 +171,13 @@ public class Main {
 		glDisable(GL_LIGHTING);
 		glColor3f(1f, 1f, 0f);
 		glBegin(GL_POINTS);
-			glVertex3f(0f, max_x + 200f, 0f);
+			glVertex3f(0f, SUN_DISTANCE, 0f);
 		glEnd();
 		glEnable(GL_LIGHTING);
 		// TODO POKUS end
 		
 		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[]{si, si, .85f * si, 1f}));
-		glLight(GL_LIGHT0, GL_POSITION, asFloatBuffer(new float[]{0f, max_x + 200f, 0f, 1f}));
+		glLight(GL_LIGHT0, GL_POSITION, asFloatBuffer(new float[]{0f, SUN_DISTANCE, 0f, 1f}));
 		glPopMatrix();
 		
 		
@@ -268,7 +270,7 @@ public class Main {
 		
 		sun_angle += (float) delta * 360f / (1000f * DAY_LENGTH);
 		sun_angle %= 360f;
-		day_time = sun_angle / 360f;
+		day_time = ((sun_angle + 180f) % 360f) / 360f;
 		
 		
 		Display.update();
