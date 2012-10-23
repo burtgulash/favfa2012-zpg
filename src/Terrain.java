@@ -1,6 +1,7 @@
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -11,21 +12,25 @@ public class Terrain {
 	private int h;
 	private float [][] hs;
 	private Vector3f [][] ns;
+	private boolean loadFailed = false;
 	
 	public Terrain(File file, int w, int h) {
 		this.w = w;
 		this.h = h;
 		
 		hs = getHeights(file);
-		// TODO HANDLE NULL
-		// if (hs == null)
-		//	;
+		if (loadFailed)
+			return;
 		
 		ns = new Vector3f[w][];
 		for (int i = 0; i < w; i++)
 			ns[i] = new Vector3f[h];
 		
 		computeNormals();
+	}
+	
+	public boolean loadFailed() {
+		return loadFailed;
 	}
 	
 	public int getW() {
@@ -59,8 +64,12 @@ public class Terrain {
 				bytes_received += in.read(buf, bytes_received, len - bytes_received);
 			
 			in.close();
+		} catch (FileNotFoundException e) {
+			loadFailed = true;
+			System.err.println("File " + file.getName() + " not found.");
+			return null;
 		} catch (IOException e) {
-			e.printStackTrace();
+			loadFailed = true;
 			return null;
 		}
 		

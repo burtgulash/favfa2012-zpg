@@ -73,6 +73,9 @@ public class Main {
 	
 	private static void init() {
 		t = new Terrain(new File("./terrain.raw"), 128, 128);
+		if (t.loadFailed())
+			System.exit(1);
+		
 		min_z = -(t.getH() - 2) * METRES_PER_FLOAT / 2;
 		max_z = t.getH() * METRES_PER_FLOAT / 2;
 		min_x = -(t.getW() - 2) * METRES_PER_FLOAT / 2;
@@ -131,7 +134,7 @@ public class Main {
 		float si = getSunIntensity();
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		// glClearColor(.85f, .85f, 1f, 1f);
+		glClearColor(si * .9f, si * .9f, si, 1f);
 		
 		
 		// Perspective transformations
@@ -154,7 +157,6 @@ public class Main {
 		
 		
 		// Ambient light
-		// float ambInt = Math.max(.1f, si * .7f);
 		float ambInt = .1f;
 		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[]{ambInt, ambInt, ambInt, 1f}));
 		glLight(GL_LIGHT1, GL_POSITION, asFloatBuffer(new float[]{100f, 100f, 100f, 1f}));
