@@ -24,38 +24,60 @@ public class Main {
 	private static long lastFrameTime;
 	
 	static Terrain t;
-	static float min_x, max_x;
-	static float min_z, max_z;
+	static float min_x, max_x, center_x;
+	static float min_z, max_z, center_z;
 	
 	static float altitude = 0;
 	static float azimuth = 0;
 	static boolean w, s, a, d;
 	static float cam_x = 0, cam_y = 0, cam_z = 0;
 	static float speed = 0;
+	static Vector3f velocity = new Vector3f(0, 0, 0);
 	
 	static final float MAX_LOOK_UP = 90f, MAX_LOOK_DOWN = -90f;
 	
 	static boolean wire_frame = false;
 	static int wire_frame_lock = 0;
 	static float v_invert = 1f;
-	static long v_invert_lock = 0;
+	static int v_invert_lock = 0;
 	
 	static float sun_angle = 0f;
 	static float sun_intensity = 0f;
 	static double day_time = 0f;
 	
 	
-	private static float getSunIntensity() {
-		// -.5f -> center on midday
-		double sin = Math.sin(day_time * Math.PI - .5d);
-		return (float) Math.max(0d, sin * sin * sin);
+//	 main
+	public static void main(String[] args) {
+		init();
+
+		while (!Display.isCloseRequested() && !Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+			render();
+		
+		Display.destroy();
 	}
 	
 	
+//	hladká funkce určující intenzitu světla na základě času
+//	private static float getSunIntensity(double t) {
+//		// -.5f -> center on midday
+//		double sin = Math.sin(t * Math.PI - .5d);
+//		return (float) Math.max(0d, sin * sin * sin);
+//	}
+
+	private static float getSunIntensity(double t) {
+		// -.5f -> center on midday
+		// 4 -> magic constant to make sky pretty
+		double arg = (t - .5d) * 4d;
+		return (float) Math.exp(- arg * arg);
+	}
+	
+	
+//	získá systémový čas
 	private static long getTime() {
 		return Sys.getTime() * 1000 / Sys.getTimerResolution();
 	}
 	
+//	získá časový rozdíl mezi po sobě jdoucími snímky
 	private static int getTimeDelta() {
 		long currentTime = getTime();
 		int delta = (int) (currentTime - lastFrameTime);
@@ -64,6 +86,7 @@ public class Main {
 		return delta;
 	}
 	
+//	 pomocná metoda pro zabalení pole floatů do floatbufferu
 	private static FloatBuffer asFloatBuffer(float[] fs) {
 		FloatBuffer buf = BufferUtils.createFloatBuffer(fs.length);
 		buf.put(fs);
@@ -71,15 +94,18 @@ public class Main {
 		return buf;
 	}
 	
+//	 inicializace
 	private static void init() {
 		t = new Terrain(new File("./terrain.raw"), 128, 128);
 		if (t.loadFailed())
 			System.exit(1);
 		
-		min_z = -(t.getH() - 2) * METRES_PER_FLOAT / 2;
-		max_z = t.getH() * METRES_PER_FLOAT / 2;
-		min_x = -(t.getW() - 2) * METRES_PER_FLOAT / 2;
-		max_x = t.getW() * METRES_PER_FLOAT / 2;
+		min_z = -(t.getH() - 1) * METRES_PER_FLOAT / 2;
+		max_z = (t.getH() -1 )* METRES_PER_FLOAT / 2;
+		min_x = -(t.getW() - 1) * METRES_PER_FLOAT / 2;
+		max_x = (t.getW() - 1) * METRES_PER_FLOAT / 2;
+		center_z = (max_z - min_z) / 2;
+		center_x = (max_x - min_x) / 2;
 		
 		lastFrameTime = getTime();
 		
@@ -105,33 +131,37 @@ public class Main {
 		
 	}
 	
+//	získá souřadnici Y (tzn. výšku v terénu) na základě pozice v terénu (x, z)
 	private static float getY(float x, float z) {
-		int cc = (int) ((x / METRES_PER_FLOAT) + t.getW() / 2);
-		int rr = (int) ((z / METRES_PER_FLOAT) + t.getH() / 2);
-		float rdx = (float) (cc - t.getW() / 2) * METRES_PER_FLOAT;
-		float rdz = (float) (rr - t.getW() / 2) * METRES_PER_FLOAT;
+		// získat indexy čtverce, ve kterém jsou zadané souřadnice
+		int cc = (int) ((x + center_x) / METRES_PER_FLOAT);
+		int rr = (int) ((z + center_z) / METRES_PER_FLOAT);
+		// získat pozici v terénu rohu tohoto čtverce
+		float rdx = (float) cc * METRES_PER_FLOAT - center_x; 
+		float rdz = (float) rr * METRES_PER_FLOAT - center_z; 
 		
 		Vector3f b = new Vector3f(rdx, t.getHeight(cc, rr + 1), rdz + METRES_PER_FLOAT);
 		Vector3f c = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr), rdz);
 		Vector3f cmb = Vector3f.sub(c, b, null);
 		Vector3f v;
 		
-		// if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
-		if (x - b.x > z - b.z)
+		// test na jeden ze dvou trojúhelníku ve čtverci
+		if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
 			v = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr + 1), rdz + METRES_PER_FLOAT);
 		else
 			v = new Vector3f(rdx, t.getHeight(cc, rr), rdz);
 		
+		// získání normály trojúhelníku
 		Vector3f vmb = Vector3f.sub(v, b, null);
 		Vector3f n = Vector3f.cross(vmb, cmb, null);
+		// řešení rovnice n.x * x + n.y * y + n.z * z == nb
 		return (Vector3f.dot(n, b) - n.x * x - n.z * z) / n.y;
 	}
 	
-	static Vector3f p = new Vector3f(0,0,0);
-	static boolean g = false;
 	
+//	 renderování jednoho snímku
 	private static void render() {
-		float si = getSunIntensity();
+		float si = getSunIntensity(day_time);
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(si * .9f, si * .9f, si, 1f);
@@ -155,7 +185,6 @@ public class Main {
 		glTranslatef(cam_x, cam_y, cam_z);
 		
 		
-		
 		// Ambient light
 		float ambInt = .1f;
 		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[]{ambInt, ambInt, ambInt, 1f}));
@@ -169,13 +198,15 @@ public class Main {
 		glRotatef(sun_angle, 0f, 0f, 1f);
 		
 		// TODO POKUS begin
-		glPointSize(20f);
+		glEnable(GL_POINT_SMOOTH);
 		glDisable(GL_LIGHTING);
-		glColor3f(1f, 1f, 0f);
+		glPointSize(30f);
 		glBegin(GL_POINTS);
+			glColor3f(1f, 1f, 1f);
 			glVertex3f(0f, SUN_DISTANCE, 0f);
 		glEnd();
 		glEnable(GL_LIGHTING);
+		glDisable(GL_POINT_SMOOTH);
 		// TODO POKUS end
 		
 		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[]{si, si, .85f * si, 1f}));
@@ -193,9 +224,9 @@ public class Main {
 				float x, y, z;
 				Vector3f n;
 				
-				x = (float) (c - t.getW() / 2) * METRES_PER_FLOAT;
+				x = (float) c * METRES_PER_FLOAT - center_x; 
 				y = t.getHeight(c, r);
-				z = (float) (r - t.getH() / 2) * METRES_PER_FLOAT;
+				z = (float) r * METRES_PER_FLOAT - center_z;
 				n = t.getNormal(c, r);
 				
 				glNormal3f(n.x, n.y, n.z);
@@ -219,16 +250,25 @@ public class Main {
 			speed *= 1 / Math.sqrt(2);
 		
 		float azimuth_rads = (float) Math.toRadians(azimuth);
+		velocity.set(0, 0, 0);
 		if (w) {
+			velocity.x += Math.cos(azimuth_rads + Math.PI / 2d);
+			velocity.z += Math.sin(azimuth_rads + Math.PI / 2d);
 			cam_x += speed * Math.cos(azimuth_rads + Math.PI / 2d);
 			cam_z += speed * Math.sin(azimuth_rads + Math.PI / 2d);
 		} if (s) {
+			velocity.x -= Math.cos(azimuth_rads + Math.PI / 2d);
+			velocity.z -= Math.sin(azimuth_rads + Math.PI / 2d);
 			cam_x -= speed * Math.cos(azimuth_rads + Math.PI / 2d);
 			cam_z -= speed * Math.sin(azimuth_rads + Math.PI / 2d);
 		} if (a) {
+			velocity.x += Math.cos(azimuth_rads);
+			velocity.z += Math.sin(azimuth_rads);
 			cam_x += speed * Math.cos(azimuth_rads);
 			cam_z += speed * Math.sin(azimuth_rads);
 		} if (d) {
+			velocity.x -= Math.cos(azimuth_rads);
+			velocity.z -= Math.sin(azimuth_rads);
 			cam_x -= speed * Math.cos(azimuth_rads);
 			cam_z -= speed * Math.sin(azimuth_rads);
 		}
@@ -248,7 +288,7 @@ public class Main {
 		d = Keyboard.isKeyDown(Keyboard.KEY_D) || Keyboard.isKeyDown(Keyboard.KEY_RIGHT);
 		
 		// WIREFRAME
-		if (wire_frame_lock == 0) {
+		if (wire_frame_lock <= 0) {
 			if (Keyboard.isKeyDown(Keyboard.KEY_C)) {
 				wire_frame = !wire_frame;
 				wire_frame_lock = 15;
@@ -263,11 +303,15 @@ public class Main {
 		
 		
 		// VERTICAL INVERT
-		if (v_invert_lock < getTime() && Keyboard.isKeyDown(Keyboard.KEY_U)) {
-			v_invert *= -1f;
-			altitude *= -1f;
-			v_invert_lock = getTime() + 100;
-		}
+		if (v_invert_lock <= 0) {
+			if (Keyboard.isKeyDown(Keyboard.KEY_U)) {
+				v_invert *= -1;
+				altitude *= -1;
+				v_invert_lock = 15;
+			}
+					
+		} else
+			v_invert_lock --;
 		
 		
 		sun_angle += (float) delta * 360f / (1000f * DAY_LENGTH);
@@ -277,14 +321,5 @@ public class Main {
 		
 		Display.update();
 		Display.sync(60);
-	}
-	
-	public static void main(String[] args) {
-		init();
-
-		while (!Display.isCloseRequested() && !Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
-			render();
-		
-		Display.destroy();
 	}
 }
