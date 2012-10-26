@@ -30,7 +30,7 @@ public class Main {
 	static float altitude = 0;
 	static float azimuth = 0;
 	static boolean w, s, a, d;
-	static float cam_x = 0, cam_y = 0, cam_z = 0;
+	static Vector3f cam;
 	static float speed = 0;
 	static Vector3f velocity = new Vector3f(0, 0, 0);
 	
@@ -58,12 +58,6 @@ public class Main {
 	
 	
 //	hladká funkce určující intenzitu světla na základě času
-//	private static float getSunIntensity(double t) {
-//		// -.5f -> center on midday
-//		double sin = Math.sin(t * Math.PI - .5d);
-//		return (float) Math.max(0d, sin * sin * sin);
-//	}
-
 	private static float getSunIntensity(double t) {
 		// -.5f -> center on midday
 		// 4 -> magic constant to make sky pretty
@@ -93,6 +87,37 @@ public class Main {
 		buf.flip();
 		return buf;
 	}
+	
+//	získá souřadnici Y (tzn. výšku v terénu) na základě pozice v terénu (x, z)
+	private static float getY(float x, float z) {
+		// získat indexy čtverce, ve kterém jsou zadané souřadnice a který se nachází v terénu, ne mimo něj.
+		int cc = (int) ((x + center_x) / METRES_PER_FLOAT);
+		int rr = (int) ((z + center_z) / METRES_PER_FLOAT);
+		cc = Math.min(Math.max(0, cc), t.getW() - 1 - 1);
+		rr = Math.min(Math.max(0, rr), t.getH() - 1 - 1);
+		
+		// získat pozici v terénu rohu tohoto čtverce
+		float rdx = (float) cc * METRES_PER_FLOAT - center_x; 
+		float rdz = (float) rr * METRES_PER_FLOAT - center_z; 
+		
+		Vector3f b = new Vector3f(rdx, t.getHeight(cc, rr + 1), rdz + METRES_PER_FLOAT);
+		Vector3f c = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr), rdz);
+		Vector3f cmb = Vector3f.sub(c, b, null);
+		Vector3f v;
+		
+		// test na jeden ze dvou trojúhelníku ve čtverci
+		if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
+			v = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr + 1), rdz + METRES_PER_FLOAT);
+		else
+			v = new Vector3f(rdx, t.getHeight(cc, rr), rdz);
+		
+		// získání normály trojúhelníku
+		Vector3f vmb = Vector3f.sub(v, b, null);
+		Vector3f n = Vector3f.cross(vmb, cmb, null);
+		// řešení rovnice n.x * x + n.y * y + n.z * z == nb
+		return (Vector3f.dot(n, b) - n.x * x - n.z * z) / n.y;
+	}
+	
 	
 //	 inicializace
 	private static void init() {
@@ -129,33 +154,8 @@ public class Main {
 		glEnable(GL_LIGHT1);
 		glEnable(GL_LIGHT2);
 		
-	}
-	
-//	získá souřadnici Y (tzn. výšku v terénu) na základě pozice v terénu (x, z)
-	private static float getY(float x, float z) {
-		// získat indexy čtverce, ve kterém jsou zadané souřadnice
-		int cc = (int) ((x + center_x) / METRES_PER_FLOAT);
-		int rr = (int) ((z + center_z) / METRES_PER_FLOAT);
-		// získat pozici v terénu rohu tohoto čtverce
-		float rdx = (float) cc * METRES_PER_FLOAT - center_x; 
-		float rdz = (float) rr * METRES_PER_FLOAT - center_z; 
-		
-		Vector3f b = new Vector3f(rdx, t.getHeight(cc, rr + 1), rdz + METRES_PER_FLOAT);
-		Vector3f c = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr), rdz);
-		Vector3f cmb = Vector3f.sub(c, b, null);
-		Vector3f v;
-		
-		// test na jeden ze dvou trojúhelníku ve čtverci
-		if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
-			v = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1, rr + 1), rdz + METRES_PER_FLOAT);
-		else
-			v = new Vector3f(rdx, t.getHeight(cc, rr), rdz);
-		
-		// získání normály trojúhelníku
-		Vector3f vmb = Vector3f.sub(v, b, null);
-		Vector3f n = Vector3f.cross(vmb, cmb, null);
-		// řešení rovnice n.x * x + n.y * y + n.z * z == nb
-		return (Vector3f.dot(n, b) - n.x * x - n.z * z) / n.y;
+		cam = new Vector3f(0, 0, 0);
+		cam.y = -(CAM_HEIGHT + getY(-cam.x, -cam.z));
 	}
 	
 	
@@ -172,17 +172,18 @@ public class Main {
 		glLoadIdentity();
 		gluPerspective(80f, (float) Display.getWidth() / (float) Display.getHeight(), .001f, 700f);
 		
-		try {
-			cam_y = -(CAM_HEIGHT + getY(-cam_x, -cam_z));
-		} catch (ArrayIndexOutOfBoundsException e) {
-		}
+//		try {
+//			cam.y = -(CAM_HEIGHT + getY(-cam.x, -cam.z));
+//		} catch (ArrayIndexOutOfBoundsException e) {
+//		}
+//		System.out.println(-cam.y - getY(-cam.x, -cam.z));
 		
 		// Modelview transformations
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glRotatef(-altitude, v_invert * 1f, 0f, 0f);
 		glRotatef(azimuth, 0, 1, 0);
-		glTranslatef(cam_x, cam_y, cam_z);
+		glTranslatef(cam.x, cam.y, cam.z);
 		
 		
 		// Ambient light
@@ -245,37 +246,46 @@ public class Main {
 		// Buttons, keyboard, ...
 		int delta = getTimeDelta();
 		speed = (float) delta * MOVEMENT_SPEED / 1000f;
-		if ((w || s) && (a || d)
-				&& !(((w || s) && a && d) || ((a || d) && w && s)))
-			speed *= 1 / Math.sqrt(2);
 		
 		float azimuth_rads = (float) Math.toRadians(azimuth);
 		velocity.set(0, 0, 0);
 		if (w) {
 			velocity.x += Math.cos(azimuth_rads + Math.PI / 2d);
 			velocity.z += Math.sin(azimuth_rads + Math.PI / 2d);
-			cam_x += speed * Math.cos(azimuth_rads + Math.PI / 2d);
-			cam_z += speed * Math.sin(azimuth_rads + Math.PI / 2d);
+//			cam.x += speed * Math.cos(azimuth_rads + Math.PI / 2d);
+//			cam.z += speed * Math.sin(azimuth_rads + Math.PI / 2d);
 		} if (s) {
 			velocity.x -= Math.cos(azimuth_rads + Math.PI / 2d);
 			velocity.z -= Math.sin(azimuth_rads + Math.PI / 2d);
-			cam_x -= speed * Math.cos(azimuth_rads + Math.PI / 2d);
-			cam_z -= speed * Math.sin(azimuth_rads + Math.PI / 2d);
+//			cam.x -= speed * Math.cos(azimuth_rads + Math.PI / 2d);
+//			cam.z -= speed * Math.sin(azimuth_rads + Math.PI / 2d);
 		} if (a) {
 			velocity.x += Math.cos(azimuth_rads);
 			velocity.z += Math.sin(azimuth_rads);
-			cam_x += speed * Math.cos(azimuth_rads);
-			cam_z += speed * Math.sin(azimuth_rads);
+//			cam.x += speed * Math.cos(azimuth_rads);
+//			cam.z += speed * Math.sin(azimuth_rads);
 		} if (d) {
 			velocity.x -= Math.cos(azimuth_rads);
 			velocity.z -= Math.sin(azimuth_rads);
-			cam_x -= speed * Math.cos(azimuth_rads);
-			cam_z -= speed * Math.sin(azimuth_rads);
+//			cam.x -= speed * Math.cos(azimuth_rads);
+//			cam.z -= speed * Math.sin(azimuth_rads);
 		}
-		
-		// Keep camera in bounds
-		cam_x = Math.min(Math.max(min_x, cam_x), max_x);
-		cam_z = Math.min(Math.max(min_z, cam_z), max_z);
+		Vector3f old = new Vector3f(cam.x, cam.y, cam.z);
+		if (w || s || a || d) {
+			velocity.y -= getY(- Math.min(Math.max(min_x, (cam.x + velocity.x)), max_x), 
+								- Math.min(Math.max(min_z, (cam.z + velocity.z)), max_z)) 
+								- getY(-cam.x, -cam.z);
+			velocity.normalise();
+			velocity.scale(speed);
+			
+			cam.x = Math.min(Math.max(min_x, cam.x + velocity.x), max_x);
+			cam.z = Math.min(Math.max(min_z, cam.z + velocity.z), max_z);
+			cam.y = -(CAM_HEIGHT + getY(-cam.x, -cam.z));
+			
+			System.out.println(1000 * Vector3f.sub(old, new Vector3f(cam.x, cam.y, cam.z), null).length() / delta);
+			
+			// Keep camera in bounds
+		}
 		
 		azimuth += Mouse.getDX();
 		float dy = Mouse.getDY();
