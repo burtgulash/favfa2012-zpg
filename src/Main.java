@@ -17,10 +17,11 @@ public class Main {
 	private static final float MOVEMENT_SPEED = 3f;
 	private static final float CAM_HEIGHT = 1.85f;
 	private static final double DAY_LENGTH = 2 * 60;
-	
+	private static final int FPS = 60;
+
 	private static final float SUN_DISTANCE = 500f;
 	private static final float METRES_PER_FLOAT = 2f;
-	
+
 	private static long lastFrameTime;
 
 	static Terrain t;
@@ -135,7 +136,7 @@ public class Main {
 		max_x = (t.getW() - 1) * METRES_PER_FLOAT / 2;
 		center_z = (max_z - min_z) / 2;
 		center_x = (max_x - min_x) / 2;
-		
+
 		strips = new FloatBuffer[t.getH() - 1];
 		for (int i = 0; i < strips.length; i++) {
 			strips[i] = BufferUtils.createFloatBuffer(STRIDE * t.getW());
@@ -144,11 +145,10 @@ public class Main {
 				float y = t.getHeight(j, i);
 				float z = (float) i * METRES_PER_FLOAT - center_z;
 				Vector3f n = t.getNormal(j, i);
-				
+
 				strips[i].put(x).put(y).put(z);
 				strips[i].put(n.x).put(n.y).put(n.z);
 
-				
 				y = t.getHeight(j, i + 1);
 				z += METRES_PER_FLOAT;
 				n = t.getNormal(j, i + 1);
@@ -247,33 +247,11 @@ public class Main {
 			glVertexPointer(3, STRIDE, strips[r]);
 			strips[r].position(3);
 			glNormalPointer(STRIDE, strips[r]);
-			
+
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 2 * t.getW());
-			
+
 			glDisableClientState(GL_NORMAL_ARRAY);
 			glDisableClientState(GL_VERTEX_ARRAY);
-			
-//			glBegin(GL_TRIANGLE_STRIP);
-//			for (int c = 0; c < t.getW(); c++) {
-//				float x, y, z;
-//				Vector3f n;
-//
-//				x = (float) c * METRES_PER_FLOAT - center_x;
-//				y = t.getHeight(c, r);
-//				z = (float) r * METRES_PER_FLOAT - center_z;
-//				n = t.getNormal(c, r);
-//
-//				glNormal3f(n.x, n.y, n.z);
-//				glVertex3f(x, y, z);
-//
-//				y = t.getHeight(c, r + 1);
-//				z += METRES_PER_FLOAT;
-//				n = t.getNormal(c, r + 1);
-//
-//				glNormal3f(n.x, n.y, n.z);
-//				glVertex3f(x, y, z);
-//			}
-//			glEnd();
 		}
 
 		// Buttons, keyboard, ...
@@ -298,11 +276,12 @@ public class Main {
 			velocity.x -= Math.cos(azimuth_rads);
 			velocity.z -= Math.sin(azimuth_rads);
 		}
-		if (w || s || a || d) {
-			velocity.y -= getY(
-					-Math.min(Math.max(min_x, (cam.x + velocity.x)), max_x),
-					-Math.min(Math.max(min_z, (cam.z + velocity.z)), max_z))
-					- getY(-cam.x, -cam.z);
+
+		velocity.y -= getY(
+				-Math.min(Math.max(min_x, (cam.x + velocity.x)), max_x),
+				-Math.min(Math.max(min_z, (cam.z + velocity.z)), max_z))
+				- getY(-cam.x, -cam.z);
+		if (velocity.length() > .01f) {
 			velocity.normalise();
 			velocity.scale(speed);
 
@@ -356,6 +335,6 @@ public class Main {
 		day_time = ((sun_angle + 180f) % 360f) / 360f;
 
 		Display.update();
-		Display.sync(60);
+		Display.sync(FPS);
 	}
 }
