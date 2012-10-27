@@ -1,28 +1,26 @@
 import java.io.File;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.ARBVertexBufferObject;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GLContext;
 import org.lwjgl.util.vector.Vector3f;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 public class Main {
-	private static final float MOVEMENT_SPEED = 10f;
+	private static final float MOVEMENT_SPEED = 3f;
 	private static final float CAM_HEIGHT = 1.85f;
-	private static final double DAY_LENGTH = 120d;
+	private static final double DAY_LENGTH = 2 * 60;
+	
 	private static final float SUN_DISTANCE = 500f;
-
 	private static final float METRES_PER_FLOAT = 2f;
+	
 	private static long lastFrameTime;
 
 	static Terrain t;
@@ -167,7 +165,6 @@ public class Main {
 			Display.setTitle("ZPG 2012");
 			Display.create();
 		} catch (LWJGLException e) {
-			e.printStackTrace();
 			System.exit(2);
 		}
 
@@ -199,12 +196,6 @@ public class Main {
 				(float) Display.getWidth() / (float) Display.getHeight(),
 				.001f, 700f);
 
-		// try {
-		// cam.y = -(CAM_HEIGHT + getY(-cam.x, -cam.z));
-		// } catch (ArrayIndexOutOfBoundsException e) {
-		// }
-		// System.out.println(-cam.y - getY(-cam.x, -cam.z));
-
 		// Modelview transformations
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
@@ -228,7 +219,7 @@ public class Main {
 		glPushMatrix();
 		glRotatef(sun_angle, 0f, 0f, 1f);
 
-		// TODO POKUS begin
+		// TODO POKUS slunce begin
 		glEnable(GL_POINT_SMOOTH);
 		glDisable(GL_LIGHTING);
 		glPointSize(30f);
@@ -238,7 +229,7 @@ public class Main {
 		glEnd();
 		glEnable(GL_LIGHTING);
 		glDisable(GL_POINT_SMOOTH);
-		// TODO POKUS end
+		// TODO POKUS slunce end
 
 		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[] { si, si,
 				.85f * si, 1f }));
@@ -294,28 +285,19 @@ public class Main {
 		if (w) {
 			velocity.x += Math.cos(azimuth_rads + Math.PI / 2d);
 			velocity.z += Math.sin(azimuth_rads + Math.PI / 2d);
-			// cam.x += speed * Math.cos(azimuth_rads + Math.PI / 2d);
-			// cam.z += speed * Math.sin(azimuth_rads + Math.PI / 2d);
 		}
 		if (s) {
 			velocity.x -= Math.cos(azimuth_rads + Math.PI / 2d);
 			velocity.z -= Math.sin(azimuth_rads + Math.PI / 2d);
-			// cam.x -= speed * Math.cos(azimuth_rads + Math.PI / 2d);
-			// cam.z -= speed * Math.sin(azimuth_rads + Math.PI / 2d);
 		}
 		if (a) {
 			velocity.x += Math.cos(azimuth_rads);
 			velocity.z += Math.sin(azimuth_rads);
-			// cam.x += speed * Math.cos(azimuth_rads);
-			// cam.z += speed * Math.sin(azimuth_rads);
 		}
 		if (d) {
 			velocity.x -= Math.cos(azimuth_rads);
 			velocity.z -= Math.sin(azimuth_rads);
-			// cam.x -= speed * Math.cos(azimuth_rads);
-			// cam.z -= speed * Math.sin(azimuth_rads);
 		}
-		Vector3f old = new Vector3f(cam.x, cam.y, cam.z);
 		if (w || s || a || d) {
 			velocity.y -= getY(
 					-Math.min(Math.max(min_x, (cam.x + velocity.x)), max_x),
@@ -327,13 +309,6 @@ public class Main {
 			cam.x = Math.min(Math.max(min_x, cam.x + velocity.x), max_x);
 			cam.z = Math.min(Math.max(min_z, cam.z + velocity.z), max_z);
 			cam.y = -(CAM_HEIGHT + getY(-cam.x, -cam.z));
-
-			System.out.println(1000
-					* Vector3f
-							.sub(old, new Vector3f(cam.x, cam.y, cam.z), null)
-							.length() / delta);
-
-			// Keep camera in bounds
 		}
 
 		azimuth += Mouse.getDX();
@@ -375,6 +350,7 @@ public class Main {
 		} else
 			v_invert_lock--;
 
+		// Update time of day and angle of sun
 		sun_angle += (float) delta * 360f / (1000f * DAY_LENGTH);
 		sun_angle %= 360f;
 		day_time = ((sun_angle + 180f) % 360f) / 360f;

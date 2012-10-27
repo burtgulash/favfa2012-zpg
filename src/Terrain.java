@@ -14,6 +14,12 @@ public class Terrain {
 	private Vector3f [][] ns;
 	private boolean loadFailed = false;
 	
+	/**
+	 * Vytvoří objekt třídy Terrain.
+	 * @param file soubor s mapou
+	 * @param w šířka mapy, musí být známa předem
+	 * @param h výška mapy, musí být známa předem
+	 */
 	public Terrain(File file, int w, int h) {
 		this.w = w;
 		this.h = h;
@@ -29,26 +35,55 @@ public class Terrain {
 		computeNormals();
 	}
 	
+	/**
+	 * Test jestli se terén načetl správně.
+	 * @return true, pokud ano.
+	 */
 	public boolean loadFailed() {
 		return loadFailed;
 	}
 	
+	/**
+	 * Získá počet indexů na šířku.
+	 * @return w
+	 */
 	public int getW() {
 		return w;
 	}
 	
+	/**
+	 * Získá počet indexů na výšku.
+	 * @return h
+	 */
 	public int getH() {
 		return h;
 	}
 	
+	/**
+	 * Získá y-souřadnici.
+	 * @param x šířkový index
+	 * @param z výškový index
+	 * @return Výšku v bodě (x, z).
+	 */
 	public float getHeight(int x, int z) {
 		return hs[z][x];
 	}
 	
+	/**
+	 * Získá normálu.
+	 * @param x šířkový index
+	 * @param z výškový index
+	 * @return Normálu v bodě (x, z).
+	 */
 	public Vector3f getNormal(int x, int z) {
 		return ns[z][x];
 	}
 	
+	/**
+	 * Načte y-souřadnice ze souboru.
+	 * @param file soubor s výškovou mapou terénu.
+	 * @return Parsovanou výškovou mapu.
+	 */
 	private float [][] getHeights(File file) {
 		int rows = 128;
 		int cols = 128;
@@ -80,6 +115,9 @@ public class Terrain {
 		return heights;
 	}
 	
+	/**
+	 * Vypočte normály pro každý bod terénu.
+	 */
 	private void computeNormals() {
 		for (int x = 0; x < w; x++)
 			for (int z = 0; z < h; z++) {
