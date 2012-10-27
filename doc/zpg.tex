@@ -59,12 +59,43 @@ v rozích. \\
 \mathbf n &:= \frac{\mathbf n}{\|\mathbf n\|} \\
 \end{align*}
 
-\begin{center}
-\includegraphics[width=10cm]{normals_persp.pdf}
-\end{center}
+\begin{figure}[ht!]
+\centering
+	\includegraphics[width=10cm]{normals_persp.pdf}
+	\caption{výpočet normály vrcholu}
+\end{figure}
 
 \subsection{Detekce kolizí při pohybu po terénu}
-Nejprve je spočten směrový vektor v rovině XZ podle momentálně stisknutých
+Pro detekci kolizí slouží metoda $float~getY(x, z)$, která vypočte y-souřadnici
+nad pozicí (x, z) v rovině.
+
+\subsubsection{getY}
+Body x a z se zaokrouhlí dolů, tedy získáme souřadnice nejbližšího rohu čtverce
+směrem doleva dolů, tzn. bodu $\mathbf a$.
+
+Jestliže víme, ve kterém čtverci sítě terénu se nacházíme, musíme ještě
+rozhodnout ze dvou trojúhelníků tohoto čtverce. Skalární součin vektoru s
+rovinnou normálou vektoru $\mathbf b - \mathbf c$ určuje v rovině XZ
+polorovinu, podle znaménka výsledku, čímž zjistíme onen trojúhelník.  
+$$
+(\mathbf
+c - \mathbf b) \cdot \mathbf n = 0
+$$
+$$
+sign(\mathbf n \cdot \mathbf x) = polorovina
+$$
+
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=10cm]{triangl.pdf}
+	\caption{Rozdělení čtverce na poloroviny}
+\end{figure}
+\clearpage
+
+
+\subsubsection{Rychlostní vektor}
+Poté je spočten směrový vektor v rovině XZ podle momentálně stisknutých
 kláves WSAD. Výšková složka tohoto vektoru je dopočtena jako rozdíl výšky v
 terénu nad současnou pozicí a výškou nad novou pozicí určenou směrovým vektorem
 v rovině. Vektor je pak normalizován a zvětšen rychlostním koeficientem, který
@@ -135,6 +166,12 @@ plným modelem pomocí klávesy C.
 {\bf \#1 LWJGL Workspace - LWJGL Tutorials} \\
 	2011 \\
 \url{http://youtu.be/0v56I5UWrYY}
+
+\bibitem[3]{wikistrips}
+{\em Wikipedia contributors} \\
+{\bf ``Triangle strip,'' Wikipedia, The Free Encyclopedia} \\
+	(accessed October 27, 2012) \\
+\url{http://en.wikipedia.org/wiki/Triangle_strip}
 
 
 \end{thebibliography}

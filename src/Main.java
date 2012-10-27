@@ -295,14 +295,10 @@ public class Main {
 		if (altitude + dy > MAX_LOOK_DOWN && altitude + dy < MAX_LOOK_UP)
 			altitude += dy;
 
-		w = Keyboard.isKeyDown(Keyboard.KEY_W)
-				|| Keyboard.isKeyDown(Keyboard.KEY_UP);
-		s = Keyboard.isKeyDown(Keyboard.KEY_S)
-				|| Keyboard.isKeyDown(Keyboard.KEY_DOWN);
-		a = Keyboard.isKeyDown(Keyboard.KEY_A)
-				|| Keyboard.isKeyDown(Keyboard.KEY_LEFT);
-		d = Keyboard.isKeyDown(Keyboard.KEY_D)
-				|| Keyboard.isKeyDown(Keyboard.KEY_RIGHT);
+		w = Keyboard.isKeyDown(Keyboard.KEY_W);
+		s = Keyboard.isKeyDown(Keyboard.KEY_S);
+		a = Keyboard.isKeyDown(Keyboard.KEY_A);
+		d = Keyboard.isKeyDown(Keyboard.KEY_D);
 
 		// WIREFRAME
 		if (wire_frame_lock <= 0) {
