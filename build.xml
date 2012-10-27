@@ -1,24 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="zpg" default="run" basedir=".">
-	<property name="jar.file" value="ZPG_2012_1_Marsalek_Tomas_A10B0632P.jar" />
-	<property name="lib.dir" value="lib" />
-	<property name="classes.dir" value="classes" />
+	<property name="jar.file" value="bin/ZPG_2012_1_Marsalek_Tomas_A10B0632P.jar" />
 	<path id="cp">
-		<fileset dir="${lib.dir}/jars">
+		<fileset dir="lib/jars">
 			<include name="*.jar"/>
 		</fileset>
 	</path>
 
 	<target name="compile" depends="clean">
-		<mkdir dir="${classes.dir}" />
-		<javac srcdir="src" destdir="${classes.dir}" includeantruntime="false">
+		<javac srcdir="src" destdir="bin" includeantruntime="false">
 			<classpath refid="cp"/>
 		</javac>
-		<jar destfile="${jar.file}" basedir="${classes.dir}">
+		<jar destfile="${jar.file}" basedir="bin">
 			<manifest>
 				<attribute name="Main-Class" value="Main" />
 				<attribute name="Class-Path" 
-		value=". ${lib.dir}/jars/lwjgl.jar ${lib.dir}/jars/lwjgl_util.jar" />
+		value=". ../lib/jars/lwjgl.jar ../lib/jars/lwjgl_util.jar" />
 			</manifest>
 		</jar>
 	</target>
@@ -26,13 +23,19 @@
 	<target name="run" depends="compile">
 		<java jar="${jar.file}" fork="true">
 			<classpath refid="cp" />
+<!--
 			<sysproperty 
-				key="java.library.path" value="${lib.dir}/natives-linux"/>
+				key="java.library.path" value="lib/natives"/>
+-->
 		</java>
 	</target>
 
 	<target name="clean">
 		<delete file="${jar.file}" />
-		<delete dir="${classes.file}" />
+		<delete>
+			<fileset dir="bin">
+				<include name="*.class" />
+			</fileset>
+		</delete>
 	</target>
 </project>

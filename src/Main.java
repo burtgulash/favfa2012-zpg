@@ -50,6 +50,20 @@ public class Main {
 
 	// main
 	public static void main(String[] args) {
+		String dir = System.getProperty("user.dir");
+		if (dir.endsWith("bin") || dir.endsWith("bin/")) {
+			if ((t = new Terrain(new File("data/terrain.raw"), 128, 128))
+					.loadFailed())
+				System.exit(1);
+			System.setProperty("org.lwjgl.librarypath", dir
+					+ "/../lib/natives/");
+		} else {
+			if ((t = new Terrain(new File("bin/data/terrain.raw"), 128, 128))
+					.loadFailed())
+				System.exit(1);
+			System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives/");
+		}
+
 		init();
 
 		while (!Display.isCloseRequested()
@@ -126,10 +140,6 @@ public class Main {
 
 	// inicializace
 	private static void init() {
-		t = new Terrain(new File("./terrain.raw"), 128, 128);
-		if (t.loadFailed())
-			System.exit(1);
-
 		min_z = -(t.getH() - 1) * METRES_PER_FLOAT / 2;
 		max_z = (t.getH() - 1) * METRES_PER_FLOAT / 2;
 		min_x = -(t.getW() - 1) * METRES_PER_FLOAT / 2;
