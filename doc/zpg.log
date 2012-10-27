@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.10.27)  27 OCT 2012 15:23
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.10.27)  27 OCT 2012 16:28
 entering extended mode
  %&-line parsing enabled.
 **zpg.tex
@@ -540,61 +540,71 @@ Package hyperref Warning: Composite letter `\textasciicaron+e'
 (hyperref)                not defined in PD1 encoding,
 (hyperref)                removing `\textasciicaron' on input line 111.
 
-[2 <./normals_persp.pdf>]
+[2 <./normals_persp.pdf>] [3 <./triangl.pdf>]
 
 Package hyperref Warning: Composite letter `\textasciicaron+r'
 (hyperref)                not defined in PD1 encoding,
-(hyperref)                removing `\textasciicaron' on input line 123.
+(hyperref)                removing `\textasciicaron' on input line 124.
 
 
 Package hyperref Warning: Composite letter `\textasciicaron+e'
 (hyperref)                not defined in PD1 encoding,
-(hyperref)                removing `\textasciicaron' on input line 123.
+(hyperref)                removing `\textasciicaron' on input line 124.
+
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 132.
+
+(/usr/share/texmf-texlive/tex/latex/base/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 132.
 
 
 Package hyperref Warning: Composite letter `\textasciicaron+r'
 (hyperref)                not defined in PD1 encoding,
-(hyperref)                removing `\textasciicaron' on input line 128.
+(hyperref)                removing `\textasciicaron' on input line 137.
 
 
 Package hyperref Warning: Composite letter `\textasciicaron+r'
 (hyperref)                not defined in PD1 encoding,
-(hyperref)                removing `\textasciicaron' on input line 128.
+(hyperref)                removing `\textasciicaron' on input line 137.
 
 
 Package hyperref Warning: Composite letter `\textasciicaron+r'
 (hyperref)                not defined in PD1 encoding,
-(hyperref)                removing `\textasciicaron' on input line 135.
+(hyperref)                removing `\textasciicaron' on input line 143.
 
 
 Package hyperref Warning: Composite letter `\textasciicaron+r'
 (hyperref)                not defined in PD1 encoding,
-(hyperref)                removing `\textasciicaron' on input line 135.
+(hyperref)                removing `\textasciicaron' on input line 143.
 
-[3 <./triangl.pdf>] [4] (./zpg.aux) ) 
+[4
+
+] [5] (./zpg.aux) ) 
 Here is how much of TeX's memory you used:
- 5392 strings out of 495027
- 74240 string characters out of 1181418
+ 5411 strings out of 495027
+ 74542 string characters out of 1181418
  155018 words of memory out of 3000000
- 8465 multiletter control sequences out of 15000+50000
+ 8480 multiletter control sequences out of 15000+50000
  10844 words of font info for 39 fonts, out of 3000000 for 9000
  38 hyphenation exceptions out of 8191
- 38i,9n,39p,248b,424s stack positions out of 5000i,500n,10000p,200000b,50000s
-</usr/share/texmf-texlive/fonts/type1/publ
-ic/amsfonts/cm/cmbx10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts
-/cm/cmbx12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi10.
-pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/sh
-are/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf-te
-xlive/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texmf-texlive/fonts/
-type1/public/amsfonts/cm/cmr17.pfb></usr/share/texmf-texlive/fonts/type1/public
-/amsfonts/cm/cmr6.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/
-cmr8.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy10.pfb></
-usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/te
-xmf-texlive/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texmf-texlive
-/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on zpg.pdf (4 pages, 196624 bytes).
+ 38i,9n,39p,248b,405s stack positions out of 5000i,500n,10000p,200000b,50000s
+</usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmb
+x10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmbx12.pfb></u
+sr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/te
+xmf-texlive/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texmf-texlive/
+fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf-texlive/fonts/type1/
+public/amsfonts/cm/cmr12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfo
+nts/cm/cmr17.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr6.
+pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/sha
+re/texmf-texlive/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf-te
+xlive/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/
+type1/public/amsfonts/cm/cmti10.pfb></usr/share/texmf-texlive/fonts/type1/publi
+c/amsfonts/cm/cmtt10.pfb>
+Output written on zpg.pdf (5 pages, 198068 bytes).
 PDF statistics:
- 174 PDF objects out of 1000 (max. 8388607)
- 25 named destinations out of 1000 (max. 500000)
+ 178 PDF objects out of 1000 (max. 8388607)
+ 26 named destinations out of 1000 (max. 500000)
  123 words of extra memory for PDF output out of 10000 (max. 10000000)
 

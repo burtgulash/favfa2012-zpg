@@ -120,16 +120,24 @@ byl výsledek co nejbližší skutečnosti.
 
 Získaná intenzita se používá přímo jako intenzita hlavního zdroje světla - slunce a jako barva atmosféry.
 
+\clearpage
 \section{Přeložení a spuštění}
-Aplikace byla vyvíjena pod GNU/Linux, přiložené knihovny a instrukce pro spuštění aplikace jsou pro Windows.
+Aplikace byla vyvíjena pod GNU/Linux, přiložené knihovny a instrukce pro
+spuštění aplikace jsou pro Windows. Verze Javy je 1.6.
 
-V kořenovém adresáři je přiložen spustitelný soubor, vytvořený pomocí utility \textbf {jarsplice}.
+V kořenovém adresáři jsou dodatečně přiloženy spustitelné soubory vytvořené
+pomocí utility \textbf{jarsplice}, které obsahují všechny potřebné knihovny a
+nativní soubory.
+\begin{itemize}
+	\item \textbf{ZPG.exe} pro Windows
+	\item \textbf{ZPG.sh} pro Linux
+	\item \textbf{ZPG.jar} pro Windows i Linux, spuštění přes příkaz java -jar
+\end{itemize}
 
 \subsection{Z příkazové řádky}
 spuštění přiloženého archivu:
 \begin{verbatim}
-$  java -cp lib/jars/lwjgl.jar:lib/jars/lwjgl_util.jar -jar
-bin/ZPG_A10B0632P.jar
+$  java -jar ZPG_A10B0632P.jar
 \end{verbatim}
 
 \subsubsection{Přeložení ze zdrojového kódu přímo}
@@ -157,9 +165,9 @@ $  ant run
 \subsection{V Eclipse}
 Získání a integrace \textbf {LWJGL} pod eclipse je popsána ve videu
 \cite{installtut}, ale není třeba. Práce je odevzdána přímo jako projekt
-%% TODO TODO TODO FIXME TODO TODO FIXME 
-eclipse, tedy stačí vytvořit projekt Z
-%% TODO TODO TODO FIXME TODO TODO FIXME 
+eclipse, tedy stačí v Eclipse importovat existující projekt. Při importu se
+však smaže adresář bin, je třeba ho nakopírovat zpátky, jinak chybí soubor s
+terénem v bin/data.
 
 
 \section{Ovládání hry}

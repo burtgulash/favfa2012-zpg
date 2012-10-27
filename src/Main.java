@@ -47,18 +47,19 @@ public class Main {
 	static float sun_angle = 0f;
 	static float sun_intensity = 0f;
 	static double day_time = 0f;
+	static final float AMB_INT = .1f;
 
 	// main
 	public static void main(String[] args) {
 		String dir = System.getProperty("user.dir");
 		if (dir.endsWith("bin") || dir.endsWith("bin/")) {
-			if ((t = new Terrain(new File("data/terrain.raw"), 128, 128))
+			if ((t = new Terrain(new File("data/mapa128x128.raw"), 128, 128))
 					.loadFailed())
 				System.exit(1);
 			System.setProperty("org.lwjgl.librarypath", dir
 					+ "/../lib/natives/");
 		} else {
-			if ((t = new Terrain(new File("bin/data/terrain.raw"), 128, 128))
+			if ((t = new Terrain(new File("bin/data/mapa128x128.raw"), 128, 128))
 					.loadFailed())
 				System.exit(1);
 			System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives/");
@@ -214,14 +215,13 @@ public class Main {
 		glTranslatef(cam.x, cam.y, cam.z);
 
 		// Ambient light
-		float ambInt = .1f;
-		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[] { ambInt,
-				ambInt, ambInt, 1f }));
+		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT,
+				AMB_INT, AMB_INT, 1f }));
 		glLight(GL_LIGHT1, GL_POSITION, asFloatBuffer(new float[] { 100f, 100f,
 				100f, 1f }));
 
-		glLight(GL_LIGHT2, GL_DIFFUSE, asFloatBuffer(new float[] { ambInt,
-				ambInt, ambInt, 1f }));
+		glLight(GL_LIGHT2, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT,
+				AMB_INT, AMB_INT, 1f }));
 		glLight(GL_LIGHT2, GL_POSITION, asFloatBuffer(new float[] { -100f,
 				100f, -100f, 1f }));
 
