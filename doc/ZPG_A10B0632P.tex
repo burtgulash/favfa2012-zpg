@@ -92,6 +92,20 @@ $$
 	\caption{Rozdělení čtverce na poloroviny}
 \end{figure}
 
+Jestliže známe trojúhelník, můžeme vypočítat kýženou y-souřadnici nad bodem (x,
+z). Rovinu, ve které trojúhelník leží definujeme alespoň jedním bodem
+trojúhelníku a normálou trojúhelníka. Normálu získáme vektorovým součinem
+libovolných dvou jeho hran. U normály $\mathbf n$ nezáleží ani na velikosti ani
+na orientaci. Rovina splňuje rovnici $\mathbf n \cdot (\mathbf x - \mathbf a) =
+0$, kde vektor $\mathbf x$ je pozice bodu od počátku a $\mathbf a$ je pozice
+jednoho z bodů na trojúhelníku. Y získáme jednoduše jako řešení této rovnice.
+
+\begin{align*}
+\mathbf n \cdot (\mathbf x - \mathbf a) &= 0 \\
+\mathbf n \cdot \mathbf x &= \mathbf n \cdot \mathbf a \\
+n_x x_x + n_y x_y + n_z x_z &= \mathbf n \cdot \mathbf a \\
+x_y &= \frac{\mathbf n \cdot \mathbf a - n_x x_x - n_z x_z}{n_y} \\
+\end{align*}
 
 \subsubsection{Rychlostní vektor}
 Poté je spočten směrový vektor v rovině XZ podle momentálně stisknutých
@@ -137,18 +151,18 @@ nativní soubory.
 \subsection{Z příkazové řádky}
 spuštění přiloženého archivu:
 \begin{verbatim}
-$  java -jar ZPG_A10B0632P.jar
+bin$  java -jar ZPG_A10B0632P.jar
 \end{verbatim}
 
 \subsubsection{Přeložení ze zdrojového kódu přímo}
 přeložení:
 \begin{verbatim}
-$  javac -cp .;lib\jars\lwjgl.jar:lib\jars\lwjgl_util.jar; src\Main.java
+$  javac -cp lib\jars\lwjgl.jar:lib\jars\lwjgl_util.jar; src\Main.java
 src\Terrain.java
 \end{verbatim}
 spuštění:
 \begin{verbatim}
-$  java -cp .;lib\jars\lwjgl.jar;lib\jars\lwjgl_util.jar; Main
+$  java -cp lib\jars\lwjgl.jar;lib\jars\lwjgl_util.jar; Main
 \end{verbatim}
 
 
