@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="zpg" default="run" basedir=".">
-	<property name="jar.file" value="bin/ZPG_2012_1_Marsalek_Tomas_A10B0632P.jar" />
+	<property name="jar.file" value="bin/ZPG_A10B0632P.jar" />
 	<path id="cp">
 		<fileset dir="lib/jars">
 			<include name="*.jar"/>

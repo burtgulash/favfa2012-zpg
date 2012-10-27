@@ -34,7 +34,7 @@ této trojúhelníkové sítě.
 \subsection{Výpočet normál terénu}
 Normála v každém bodě trojúhelníkové sítě je vypočtena jako průměr normál čtyř
 okolních myšlených trojúhelníků, popřípadě tří normál na hraně terénu nebo dvou
-v rozích. \\
+v rozích. Výsledek je pak znormalizován na jednotkovou velikost. \\
 
 \begin{align*}
 \mathbf {n1} &= \left[ \mathbf {terrain}(x + 1, z) - \mathbf {terrain}(x, z)
@@ -88,10 +88,9 @@ $$
 
 \begin{figure}[ht!]
 \centering
-\includegraphics[width=10cm]{triangl.pdf}
+\includegraphics[width=8cm]{triangl.pdf}
 	\caption{Rozdělení čtverce na poloroviny}
 \end{figure}
-\clearpage
 
 
 \subsubsection{Rychlostní vektor}
@@ -124,8 +123,16 @@ Získaná intenzita se používá přímo jako intenzita hlavního zdroje světl
 \section{Přeložení a spuštění}
 Aplikace byla vyvíjena pod GNU/Linux, přiložené knihovny a instrukce pro spuštění aplikace jsou pro Windows.
 
-\subsection{Adresářová struktura}
+V kořenovém adresáři je přiložen spustitelný soubor, vytvořený pomocí utility \textbf {jarsplice}.
+
 \subsection{Z příkazové řádky}
+spuštění přiloženého archivu:
+\begin{verbatim}
+$  java -cp lib/jars/lwjgl.jar:lib/jars/lwjgl_util.jar -jar
+bin/ZPG_A10B0632P.jar
+\end{verbatim}
+
+\subsubsection{Přeložení ze zdrojového kódu přímo}
 přeložení:
 \begin{verbatim}
 $  javac -cp .;lib\jars\lwjgl.jar:lib\jars\lwjgl_util.jar; src\Main.java
@@ -133,14 +140,21 @@ src\Terrain.java
 \end{verbatim}
 spuštění:
 \begin{verbatim}
-$  java -cp .;lib\jars\lwjgl.jar;lib\jars\lwjgl_util.jar; -Djava.library.path=lib/natives-windows Main
+$  java -cp .;lib\jars\lwjgl.jar;lib\jars\lwjgl_util.jar; Main
 \end{verbatim}
+
+
 \subsection{Použitím Ant}
-Pokud je nainstalovaný Apache Ant, pak pro spuštění stačí příkaz
+Pokud je nainstalovaný Apache Ant, pak pro přeložení a spuštění stačí použít příkaz z adresáře obsahující skript \textit{build.xml}.
 \begin{verbatim}
 $  ant
 \end{verbatim}
-\subsection{V eclipse}
+nebo 
+\begin{verbatim}
+$  ant run
+\end{verbatim}
+
+\subsection{V Eclipse}
 Získání a integrace \textbf {LWJGL} pod eclipse je popsána ve videu
 \cite{installtut}, ale není třeba. Práce je odevzdána přímo jako projekt
 %% TODO TODO TODO FIXME TODO TODO FIXME 
@@ -151,7 +165,7 @@ eclipse, tedy stačí vytvořit projekt Z
 \section{Ovládání hry}
 Kamerou pohneme standardně klávesami WSAD a otočíme pohybem myši. Invertování
 vertikálního pohledu provedeme pomocí klávesy U a přepnutí mezi drátěným a
-plným modelem pomocí klávesy C.
+plným modelem pomocí klávesy C. Hru ukončíme stiskem klávesy ESC.
 
 
 \begin{thebibliography}{3}
