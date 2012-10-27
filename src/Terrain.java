@@ -15,11 +15,11 @@ public class Terrain {
 	private boolean loadFailed = false;
 
 	/**
-	 * Vytvoří objekt třídy Terrain.
+	 * Vytvori objekt tridy Terrain.
 	 * 
 	 * @param file          soubor s mapou
-	 * @param w             šířka mapy, musí být známa předem
-	 * @param h             výška mapy, musí být známa předem
+	 * @param w             sirka mapy, musi byt znama predem
+	 * @param h             vyska mapy, musí byt znama predem
 	 */
 	public Terrain(File file, int w, int h) {
 		this.w = w;
@@ -37,7 +37,7 @@ public class Terrain {
 	}
 
 	/**
-	 * Test jestli se terén načetl správně.
+	 * Test jestli se teren nacetl spravne.
 	 * 
 	 * @return true, pokud ano.
 	 */
@@ -46,7 +46,7 @@ public class Terrain {
 	}
 
 	/**
-	 * Získá počet indexů na šířku.
+	 * Ziska pocet indexu na sírku.
 	 * 
 	 * @return w
 	 */
@@ -55,7 +55,7 @@ public class Terrain {
 	}
 
 	/**
-	 * Získá počet indexů na výšku.
+	 * Ziska pocet indexu na vysku.
 	 * 
 	 * @return h
 	 */
@@ -64,32 +64,32 @@ public class Terrain {
 	}
 
 	/**
-	 * Získá y-souřadnici.
+	 * Ziska y-souradnici.
 	 * 
-	 * @param x             šířkový index
-	 * @param z             výškový index
-	 * @return Výšku v bodě (x, z).
+	 * @param x             sirkovy index
+	 * @param z             vyskovy index
+	 * @return Vysku v bodě (x, z).
 	 */
 	public float getHeight(int x, int z) {
 		return hs[z][x];
 	}
 
 	/**
-	 * Získá normálu.
+	 * Ziska normalu.
 	 * 
-	 * @param x             šířkový index
-	 * @param z             výškový index
-	 * @return Normálu v bodě (x, z).
+	 * @param x             sirkovy index
+	 * @param z             vyskovy index
+	 * @return Normalu v bode (x, z).
 	 */
 	public Vector3f getNormal(int x, int z) {
 		return ns[z][x];
 	}
 
 	/**
-	 * Načte y-souřadnice ze souboru.
+	 * Nacte y-souradnice ze souboru.
 	 * 
-	 * @param file             soubor s výškovou mapou terénu.
-	 * @return Parsovanou výškovou mapu.
+	 * @param file             soubor s vyskovou mapou terenu.
+	 * @return Parsovanou vyskovou mapu.
 	 */
 	private float[][] getHeights(File file) {
 		int rows = 128;
@@ -123,7 +123,7 @@ public class Terrain {
 	}
 
 	/**
-	 * Vypočte normály pro každý bod terénu.
+	 * Vypocte normaly pro kazdy bod terenu.
 	 */
 	private void computeNormals() {
 		for (int x = 0; x < w; x++)

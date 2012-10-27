@@ -74,7 +74,7 @@ public class Main {
 		Display.destroy();
 	}
 
-	// hladká funkce určující intenzitu světla na základě času
+	// hladka funkce urcující intenzitu svetla na zaklade casu
 	private static float getSunIntensity(double t) {
 		// -.5f -> center on midday
 		// 4 -> magic constant to make sky pretty
@@ -82,12 +82,12 @@ public class Main {
 		return (float) Math.exp(-arg * arg);
 	}
 
-	// získá systémový čas
+	// ziska systemovy cas
 	private static long getTime() {
 		return Sys.getTime() * 1000 / Sys.getTimerResolution();
 	}
 
-	// získá časový rozdíl mezi po sobě jdoucími snímky
+	// ziska casovy rozdil mezi po sobe jdoucimi snimky
 	private static int getTimeDelta() {
 		long currentTime = getTime();
 		int delta = (int) (currentTime - lastFrameTime);
@@ -96,7 +96,7 @@ public class Main {
 		return delta;
 	}
 
-	// pomocná metoda pro zabalení pole floatů do floatbufferu
+	// pomocna metoda pro zabaleni pole floatu do floatbufferu
 	private static FloatBuffer asFloatBuffer(float[] fs) {
 		FloatBuffer buf = BufferUtils.createFloatBuffer(fs.length);
 		buf.put(fs);
@@ -104,17 +104,17 @@ public class Main {
 		return buf;
 	}
 
-	// získá souřadnici Y (tzn. výšku v terénu) na základě pozice v terénu (x,
+	// ziska souradnici Y (tzn. vysku v terenu) na zaklade pozice v terenu (x,
 	// z)
 	private static float getY(float x, float z) {
-		// získat indexy čtverce, ve kterém jsou zadané souřadnice a který se
-		// nachází v terénu, ne mimo něj.
+		// ziskat indexy ctverce, ve kterem jsou zadane souradnice a ktery se
+		// nachazi v terenu, ne mimo nej.
 		int cc = (int) ((x + center_x) / METRES_PER_FLOAT);
 		int rr = (int) ((z + center_z) / METRES_PER_FLOAT);
 		cc = Math.min(Math.max(0, cc), t.getW() - 1 - 1);
 		rr = Math.min(Math.max(0, rr), t.getH() - 1 - 1);
 
-		// získat pozici v terénu rohu tohoto čtverce
+		// ziskat pozici v terenu rohu tohoto ctverce
 		float rdx = (float) cc * METRES_PER_FLOAT - center_x;
 		float rdz = (float) rr * METRES_PER_FLOAT - center_z;
 
@@ -125,17 +125,17 @@ public class Main {
 		Vector3f cmb = Vector3f.sub(c, b, null);
 		Vector3f v;
 
-		// test na jeden ze dvou trojúhelníku ve čtverci
+		// test na jeden ze dvou trojuhelníku ve ctverci
 		if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
 			v = new Vector3f(rdx + METRES_PER_FLOAT,
 					t.getHeight(cc + 1, rr + 1), rdz + METRES_PER_FLOAT);
 		else
 			v = new Vector3f(rdx, t.getHeight(cc, rr), rdz);
 
-		// získání normály trojúhelníku
+		// ziskani normaly trojúhelníku
 		Vector3f vmb = Vector3f.sub(v, b, null);
 		Vector3f n = Vector3f.cross(vmb, cmb, null);
-		// řešení rovnice n.x * x + n.y * y + n.z * z == nb
+		// reseni rovnice n.x * x + n.y * y + n.z * z == nb
 		return (Vector3f.dot(n, b) - n.x * x - n.z * z) / n.y;
 	}
 
@@ -193,7 +193,7 @@ public class Main {
 		cam.y = -(CAM_HEIGHT + getY(-cam.x, -cam.z));
 	}
 
-	// renderování jednoho snímku
+	// renderovani jednoho snimku
 	private static void render() {
 		float si = getSunIntensity(day_time);
 
