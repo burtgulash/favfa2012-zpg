@@ -25,7 +25,7 @@ public class Main {
 
 	private static long lastFrameTime;
 
-	static Terrain t;
+	static Terr t;
 
 	static float altitude = 0;
 	static float azimuth = 0;
@@ -50,7 +50,7 @@ public class Main {
 	public static void main(String[] args) {
 		String dir = System.getProperty("user.dir");
 		System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives");
-		t = new Terrain(new File(dir + "/mapa128x128.raw"), 128, 128);
+		t = new Terr(new File(dir + "/mapa128x128.raw"), 128, 128);
 
 		init();
 
@@ -115,6 +115,8 @@ public class Main {
 
 		cam = new Vector3f(0, 0, 0);
 		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
+		
+		t.buildVBOs();
 	}
 
 	// renderovani jednoho snimku
