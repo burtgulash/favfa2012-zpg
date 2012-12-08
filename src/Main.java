@@ -14,21 +14,18 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 public class Main {
-	private static final float MOVEMENT_SPEED = 3f;
-	private static final float CAM_HEIGHT = 1.85f;
+	private static final float METRES_PER_FLOAT = 2f;
+	// TODO speed = 3f
+	private static final float MOVEMENT_SPEED = 10f / METRES_PER_FLOAT;
+	private static final float CAM_HEIGHT = 1.85f / METRES_PER_FLOAT;
 	private static final double DAY_LENGTH = 2 * 60;
 	private static final int FPS = 60;
 
 	private static final float SUN_DISTANCE = 500f;
-	private static final float METRES_PER_FLOAT = 2f;
 
 	private static long lastFrameTime;
 
 	static Terrain t;
-	static FloatBuffer[] strips;
-	static float min_x, max_x, center_x;
-	static float min_z, max_z, center_z;
-	private static final int STRIDE = (3 + 3) * 4;
 
 	static float altitude = 0;
 	static float azimuth = 0;
@@ -52,18 +49,8 @@ public class Main {
 	// main
 	public static void main(String[] args) {
 		String dir = System.getProperty("user.dir");
-		if (dir.endsWith("bin") || dir.endsWith("bin/")) {
-			if ((t = new Terrain(new File("data/mapa128x128.raw"), 128, 128))
-					.loadFailed())
-				System.exit(1);
-			System.setProperty("org.lwjgl.librarypath", dir
-					+ "/../lib/natives/");
-		} else {
-			if ((t = new Terrain(new File("bin/data/mapa128x128.raw"), 128, 128))
-					.loadFailed())
-				System.exit(1);
-			System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives/");
-		}
+		System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives");
+		t = new Terrain(new File(dir + "/mapa128x128.raw"), 128, 128);
 
 		init();
 
@@ -104,71 +91,8 @@ public class Main {
 		return buf;
 	}
 
-	// ziska souradnici Y (tzn. vysku v terenu) na zaklade pozice v terenu (x,
-	// z)
-	private static float getY(float x, float z) {
-		// ziskat indexy ctverce, ve kterem jsou zadane souradnice a ktery se
-		// nachazi v terenu, ne mimo nej.
-		int cc = (int) ((x + center_x) / METRES_PER_FLOAT);
-		int rr = (int) ((z + center_z) / METRES_PER_FLOAT);
-		cc = Math.min(Math.max(0, cc), t.getW() - 1 - 1);
-		rr = Math.min(Math.max(0, rr), t.getH() - 1 - 1);
-
-		// ziskat pozici v terenu rohu tohoto ctverce
-		float rdx = (float) cc * METRES_PER_FLOAT - center_x;
-		float rdz = (float) rr * METRES_PER_FLOAT - center_z;
-
-		Vector3f b = new Vector3f(rdx, t.getHeight(cc, rr + 1), rdz
-				+ METRES_PER_FLOAT);
-		Vector3f c = new Vector3f(rdx + METRES_PER_FLOAT, t.getHeight(cc + 1,
-				rr), rdz);
-		Vector3f cmb = Vector3f.sub(c, b, null);
-		Vector3f v;
-
-		// test na jeden ze dvou trojuhelníku ve ctverci
-		if (cmb.x * (z - b.z) > cmb.z * (x - b.x))
-			v = new Vector3f(rdx + METRES_PER_FLOAT,
-					t.getHeight(cc + 1, rr + 1), rdz + METRES_PER_FLOAT);
-		else
-			v = new Vector3f(rdx, t.getHeight(cc, rr), rdz);
-
-		// ziskani normaly trojúhelníku
-		Vector3f vmb = Vector3f.sub(v, b, null);
-		Vector3f n = Vector3f.cross(vmb, cmb, null);
-		// reseni rovnice n.x * x + n.y * y + n.z * z == nb
-		return (Vector3f.dot(n, b) - n.x * x - n.z * z) / n.y;
-	}
-
 	// inicializace
 	private static void init() {
-		min_z = -(t.getH() - 1) * METRES_PER_FLOAT / 2;
-		max_z = (t.getH() - 1) * METRES_PER_FLOAT / 2;
-		min_x = -(t.getW() - 1) * METRES_PER_FLOAT / 2;
-		max_x = (t.getW() - 1) * METRES_PER_FLOAT / 2;
-		center_z = (max_z - min_z) / 2;
-		center_x = (max_x - min_x) / 2;
-
-		strips = new FloatBuffer[t.getH() - 1];
-		for (int i = 0; i < strips.length; i++) {
-			strips[i] = BufferUtils.createFloatBuffer(STRIDE * t.getW());
-			for (int j = 0; j < t.getW(); j++) {
-				float x = (float) j * METRES_PER_FLOAT - center_x;
-				float y = t.getHeight(j, i);
-				float z = (float) i * METRES_PER_FLOAT - center_z;
-				Vector3f n = t.getNormal(j, i);
-
-				strips[i].put(x).put(y).put(z);
-				strips[i].put(n.x).put(n.y).put(n.z);
-
-				y = t.getHeight(j, i + 1);
-				z += METRES_PER_FLOAT;
-				n = t.getNormal(j, i + 1);
-
-				strips[i].put(x).put(y).put(z);
-				strips[i].put(n.x).put(n.y).put(n.z);
-			}
-		}
-
 		lastFrameTime = getTime();
 
 		try {
@@ -190,7 +114,7 @@ public class Main {
 		glEnable(GL_LIGHT2);
 
 		cam = new Vector3f(0, 0, 0);
-		cam.y = -(CAM_HEIGHT + getY(-cam.x, -cam.z));
+		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
 	}
 
 	// renderovani jednoho snimku
@@ -199,6 +123,8 @@ public class Main {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(si * .9f, si * .9f, si, 1f);
+		// TODO remove
+		si = .6f;
 
 		// Perspective transformations
 		glMatrixMode(GL_PROJECTION);
@@ -250,19 +176,7 @@ public class Main {
 		glColor3f(.93f, .93f, .93f);
 
 		// Render terrain
-		for (int r = 0; r < t.getH() - 1; r++) {
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			strips[r].position(0);
-			glVertexPointer(3, STRIDE, strips[r]);
-			strips[r].position(3);
-			glNormalPointer(STRIDE, strips[r]);
-
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 2 * t.getW());
-
-			glDisableClientState(GL_NORMAL_ARRAY);
-			glDisableClientState(GL_VERTEX_ARRAY);
-		}
+		t.draw();
 
 		// Buttons, keyboard, ...
 		int delta = getTimeDelta();
@@ -286,19 +200,13 @@ public class Main {
 			velocity.x -= Math.cos(azimuth_rads);
 			velocity.z -= Math.sin(azimuth_rads);
 		}
-
-		velocity.y -= getY(
-				-Math.min(Math.max(min_x, (cam.x + velocity.x)), max_x),
-				-Math.min(Math.max(min_z, (cam.z + velocity.z)), max_z))
-				- getY(-cam.x, -cam.z);
-		if (velocity.length() > .01f) {
+		if (velocity.length() > 0.1f)
 			velocity.normalise();
-			velocity.scale(speed);
+		velocity.scale(speed);
 
-			cam.x = Math.min(Math.max(min_x, cam.x + velocity.x), max_x);
-			cam.z = Math.min(Math.max(min_z, cam.z + velocity.z), max_z);
-			cam.y = -(CAM_HEIGHT + getY(-cam.x, -cam.z));
-		}
+		cam.x += velocity.x;
+		cam.z += velocity.z;
+		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
 
 		azimuth += Mouse.getDX();
 		float dy = Mouse.getDY();
@@ -306,9 +214,13 @@ public class Main {
 			altitude += dy;
 
 		w = Keyboard.isKeyDown(Keyboard.KEY_W);
+		w = w || Keyboard.isKeyDown(Keyboard.KEY_UP);
 		s = Keyboard.isKeyDown(Keyboard.KEY_S);
+		s = s || Keyboard.isKeyDown(Keyboard.KEY_DOWN);
 		a = Keyboard.isKeyDown(Keyboard.KEY_A);
+		a = a || Keyboard.isKeyDown(Keyboard.KEY_LEFT);
 		d = Keyboard.isKeyDown(Keyboard.KEY_D);
+		d = d || Keyboard.isKeyDown(Keyboard.KEY_RIGHT);
 
 		// WIREFRAME
 		if (wire_frame_lock <= 0) {
@@ -338,7 +250,15 @@ public class Main {
 		// Update time of day and angle of sun
 		sun_angle += (float) delta * 360f / (1000f * DAY_LENGTH);
 		sun_angle %= 360f;
+		// TODO debug remove 60
+		sun_angle = 60;
 		day_time = ((sun_angle + 180f) % 360f) / 360f;
+		
+		// TODO debug FPS begin
+		int fps = (int) (1000f / (float) delta);
+		if (fps < 50)
+			System.out.printf("fps: %d%n", fps);
+		// TODO debug end
 
 		Display.update();
 		Display.sync(FPS);
