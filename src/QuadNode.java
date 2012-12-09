@@ -5,6 +5,8 @@ public class QuadNode {
 	int position;
 	int nodeSize;
 	boolean hasChildren;
+	boolean isActive;
+	boolean isSplit;
 
 	NodeType nodeType;
 
@@ -28,14 +30,6 @@ public class QuadNode {
 	QuadNode neighborBottom;
 	QuadNode neighborLeft;
 
-	public boolean isRoot() {
-		return depth == 0;
-	}
-
-	public boolean isLeaf() {
-		return depth == tree.MAX_DEPTH;
-	}
-
 	public QuadNode(NodeType nodeType, int depth, int nodeSize, int position,
 			QuadNode parent, Terrain tree) {
 		this.nodeType = nodeType;
@@ -49,15 +43,30 @@ public class QuadNode {
 		if (!isLeaf())
 			addChildren();
 
+		// By updating neighbors recursively from root we ensure that all nodes
+		// already exist.
 		if (isRoot()) {
-			addNeighbors(); // TODO remove?
-
-			vertexTopLeft.activated = true;
-			vertexTopRight.activated = true;
-			vertexCenter.activated = true;
-			vertexBottomLeft.activated = true;
-			vertexBottomRight.activated = true;
+			addNeighbors();
+			activate();
 		}
+	}
+
+	public boolean isRoot() {
+		return depth == tree.ROOT_DEPTH;
+	}
+
+	public boolean isLeaf() {
+		return nodeSize < 4;
+	}
+
+	private void activate() {
+		vertexTopLeft.activated = true;
+		vertexTopRight.activated = true;
+		vertexCenter.activated = true;
+		vertexBottomLeft.activated = true;
+		vertexBottomRight.activated = true;
+
+		isActive = true;
 	}
 
 	private void addVertices() {
@@ -186,6 +195,14 @@ public class QuadNode {
 	}
 
 	void setActiveVertices() {
+		if (isSplit) {
+			childTopLeft.setActiveVertices();
+			childTopRight.setActiveVertices();
+			childBottomLeft.setActiveVertices();
+			childBottomRight.setActiveVertices();
+			return;
+		}
+
 		tree.pushIndex(vertexCenter.index);
 		tree.pushIndex(vertexTopLeft.index);
 		if (vertexTop.activated) {
@@ -221,5 +238,29 @@ public class QuadNode {
 			tree.pushIndex(vertexLeft.index);
 		}
 		tree.pushIndex(vertexTopLeft.index);
+	}
+
+	public void enforceMinimumDepth() {
+		if (depth < tree.MIN_DEPTH) {
+			if (hasChildren) {
+				isActive = false;
+				isSplit = true;
+
+				childTopLeft.enforceMinimumDepth();
+				childTopRight.enforceMinimumDepth();
+				childBottomLeft.enforceMinimumDepth();
+				childBottomRight.enforceMinimumDepth();
+			} else {
+				activate();
+				isSplit = false;
+			}
+
+			return;
+		}
+
+		if (depth == tree.MIN_DEPTH) {
+			activate();
+			isSplit = false;
+		}
 	}
 }
