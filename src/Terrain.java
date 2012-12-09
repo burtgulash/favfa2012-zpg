@@ -20,10 +20,11 @@ public class Terrain {
 	private boolean loadFailed = true;
 	private float[][] hs;
 	public QuadNode root;
-	public int indexStride;
+	public int rootNodeSize;
 
 	private FloatBuffer vbuf, nbuf;
 	private IntBuffer ibuf;
+	private int index;
 	private int vHandle, nHandle, iHandle;
 
 	private final float METRES_PER_FLOAT = 2f;
@@ -40,8 +41,11 @@ public class Terrain {
 			return;
 
 		int n = nSubdivisions(SUBDIVISION_LVL);
-		createBuffers(n * n * width * height);
+		createBuffers(n * n * (width + 1) * (height + 1));
 		subdivide(n);
+		
+		rootNodeSize = n * width;
+		root = new QuadNode(NodeType.ROOT, 0, rootNodeSize, 0, null, this);
 
 		vbuf.flip();
 		nbuf.flip();
@@ -66,9 +70,9 @@ public class Terrain {
 	}
 
 	private void subdivide(int n) {
-		// TODO borders?
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
+		// + 1 ---> 129 x 129
+		for (int i = 0; i < width + 1; i++) {
+			for (int j = 0; j < height + 1; j++) {
 				for (int xi = 0; xi < n; xi++)
 					for (int zi = 0; zi < n; zi++) {
 						float x = (float) i + (float) xi / (float) n;
@@ -136,18 +140,17 @@ public class Terrain {
 				hs[x][z] = (float) ((int) buf[x * height + z] & 0xFF) / 10f;
 				hs[x][z] /= METRES_PER_FLOAT;
 			}
+		
+		loadFailed = false;
 	}
 
-	private int fillIndexBuffer() {
-		int i = 0;
-
-		ibuf.flip();
-
-		return i;
+	public void pushIndex(int i) {
+		ibuf.put(index++);
 	}
 
 	public void draw() {
-		int vs = fillIndexBuffer();
+		int vs = index;
+		index = 0;
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_NORMAL_ARRAY);
@@ -165,8 +168,8 @@ public class Terrain {
 
 		glDrawElements(GL_TRIANGLES, vs, GL_UNSIGNED_INT, 0L);
 
-		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+//		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+//		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
 		glDisableClientState(GL_NORMAL_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);

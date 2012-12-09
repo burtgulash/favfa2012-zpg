@@ -36,20 +36,28 @@ public class QuadNode {
 		return depth == tree.MAX_DEPTH;
 	}
 
-	public QuadNode(NodeType nodeType, int depth, int nodeSize, int position, QuadNode parent, Terrain tree) {
+	public QuadNode(NodeType nodeType, int depth, int nodeSize, int position,
+			QuadNode parent, Terrain tree) {
 		this.nodeType = nodeType;
 		this.depth = depth;
 		this.position = position;
 		this.parent = parent;
 		this.tree = tree;
 		this.nodeSize = nodeSize;
-		
+
 		addVertices();
 		if (!isLeaf())
 			addChildren();
-		
-		if (isRoot())
-			add
+
+		if (isRoot()) {
+			addNeighbors(); // TODO remove?
+
+			vertexTopLeft.activated = true;
+			vertexTopRight.activated = true;
+			vertexCenter.activated = true;
+			vertexBottomLeft.activated = true;
+			vertexBottomRight.activated = true;
+		}
 	}
 
 	private void addVertices() {
@@ -83,88 +91,135 @@ public class QuadNode {
 			break;
 
 		default:
-			// TODO indexes correct!
 			vertexTopLeft = new QuadVertex(true, 0);
-			vertexTopRight = new QuadVertex(true, vertexTopLeft.index + nodeSize);
-			vertexTopLeft = new QuadVertex(true, 0);
+			vertexTopRight = new QuadVertex(true, nodeSize);
+			vertexBottomLeft = new QuadVertex(true, (tree.rootNodeSize + 1)
+					* nodeSize);
+			vertexBottomRight = new QuadVertex(true, vertexBottomLeft.index
+					+ nodeSize);
 		}
-		
-		// TODO correct indexes!
+
 		vertexTop = new QuadVertex(false, vertexTopLeft.index + nodeSize / 2);
-		vertexLeft = new QuadVertex(false, vertexTopLeft.index + tree.indexStride * nodeSize / 2);
+		vertexLeft = new QuadVertex(false, vertexTopLeft.index
+				+ (tree.rootNodeSize + 1) * nodeSize / 2);
 		vertexCenter = new QuadVertex(false, vertexLeft.index + nodeSize / 2);
 		vertexRight = new QuadVertex(false, vertexLeft.index + nodeSize);
-		vertexBottom = new QuadVertex(false, vertexBottomLeft.index + nodeSize / 2);
+		vertexBottom = new QuadVertex(false, vertexBottomLeft.index + nodeSize
+				/ 2);
 	}
-	
+
 	private void addChildren() {
 		int d = depth + 1;
 		int s = nodeSize / 2;
-		childTopLeft = new QuadNode(NodeType.TOP_LEFT, d, s, vertexTopLeft.index, this, tree);
-		childTopRight = new QuadNode(NodeType.TOP_RIGHT, d, s, vertexTop.index, this, tree);
-		childBottomLeft = new QuadNode(NodeType.BOTTOM_LEFT, d, s, vertexLeft.index, this, tree);
-		childBottomRight = new QuadNode(NodeType.BOTTOM_RIGHT, d, s, vertexCenter.index, this, tree);
-		
+		childTopLeft = new QuadNode(NodeType.TOP_LEFT, d, s,
+				vertexTopLeft.index, this, tree);
+		childTopRight = new QuadNode(NodeType.TOP_RIGHT, d, s, vertexTop.index,
+				this, tree);
+		childBottomLeft = new QuadNode(NodeType.BOTTOM_LEFT, d, s,
+				vertexLeft.index, this, tree);
+		childBottomRight = new QuadNode(NodeType.BOTTOM_RIGHT, d, s,
+				vertexCenter.index, this, tree);
+
 		hasChildren = true;
 	}
-	
+
 	private void addNeighbors() {
 		switch (nodeType) {
 		case TOP_LEFT:
 			if (parent.neighborTop != null)
 				neighborTop = parent.neighborTop.childBottomLeft;
-			
+
 			neighborRight = parent.childTopRight;
 			neighborBottom = parent.childBottomLeft;
-			
-			if (parent.neighborLeft != null) 
+
+			if (parent.neighborLeft != null)
 				neighborLeft = parent.neighborLeft.childTopRight;
-			
+
 			break;
-			
+
 		case TOP_RIGHT:
 			if (parent.neighborTop != null)
 				neighborTop = parent.neighborTop.childBottomRight;
-			
-			if (parent.neighborRight != null) 
+
+			if (parent.neighborRight != null)
 				neighborRight = parent.neighborRight.childTopLeft;
-			
+
 			neighborBottom = parent.childBottomRight;
 			neighborLeft = parent.childTopLeft;
-			
+
 			break;
-			
+
 		case BOTTOM_LEFT:
 			neighborTop = parent.childTopLeft;
 			neighborRight = parent.childBottomRight;
-			
+
 			if (parent.neighborBottom != null)
 				neighborBottom = parent.neighborBottom.childTopLeft;
-			
-			if (parent.neighborLeft != null) 
+
+			if (parent.neighborLeft != null)
 				neighborLeft = parent.neighborLeft.childBottomRight;
-			
+
 			break;
-			
+
 		case BOTTOM_RIGHT:
 			neighborTop = parent.childTopRight;
-			
+
 			if (parent.neighborRight != null)
 				neighborRight = parent.neighborRight.childBottomLeft;
-			
+
 			if (parent.neighborBottom != null)
 				neighborBottom = parent.neighborBottom.childTopRight;
-			
+
 			neighborLeft = parent.childBottomLeft;
-			
+
+			break;
+		default:
 			break;
 		}
-		
+
 		if (hasChildren) {
 			childTopLeft.addNeighbors();
 			childTopRight.addNeighbors();
 			childBottomLeft.addNeighbors();
 			childBottomRight.addNeighbors();
 		}
+	}
+
+	void setActiveVertices() {
+		tree.pushIndex(vertexCenter.index);
+		tree.pushIndex(vertexTopLeft.index);
+		if (vertexTop.activated) {
+			tree.pushIndex(vertexTop.index);
+			tree.pushIndex(vertexCenter.index);
+			tree.pushIndex(vertexTop.index);
+		}
+		tree.pushIndex(vertexTopRight.index);
+
+		tree.pushIndex(vertexCenter.index);
+		tree.pushIndex(vertexTopRight.index);
+		if (vertexRight.activated) {
+			tree.pushIndex(vertexRight.index);
+			tree.pushIndex(vertexCenter.index);
+			tree.pushIndex(vertexRight.index);
+		}
+		tree.pushIndex(vertexBottomRight.index);
+
+		tree.pushIndex(vertexCenter.index);
+		tree.pushIndex(vertexBottomRight.index);
+		if (vertexBottom.activated) {
+			tree.pushIndex(vertexBottom.index);
+			tree.pushIndex(vertexCenter.index);
+			tree.pushIndex(vertexBottom.index);
+		}
+		tree.pushIndex(vertexBottomLeft.index);
+
+		tree.pushIndex(vertexCenter.index);
+		tree.pushIndex(vertexBottomLeft.index);
+		if (vertexLeft.activated) {
+			tree.pushIndex(vertexLeft.index);
+			tree.pushIndex(vertexCenter.index);
+			tree.pushIndex(vertexLeft.index);
+		}
+		tree.pushIndex(vertexTopLeft.index);
 	}
 }
