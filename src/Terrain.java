@@ -24,11 +24,11 @@ public class Terrain {
 
 	private FloatBuffer vbuf, nbuf;
 	private IntBuffer ibuf;
-	private int index;
+	private int index_count;
 	private int vHandle, nHandle, iHandle;
 
 	private final float METRES_PER_FLOAT = 2f;
-	private final int SUBDIVISION_LVL = 3;
+	private final int SUBDIVISION_LVL = 1;
 	private final int SIZEOF_FLOAT = 1 << 2;
 	public final int MAX_DEPTH = SUBDIVISION_LVL; // TODO correct or +- 1?
 
@@ -83,7 +83,7 @@ public class Terrain {
 						float dz = (getH(xi, zi + 1) - getH(xi, zi - 1)) / 2f;
 
 						Vector3f normal = Vector3f.cross(
-								new Vector3f(1, dx, 0), new Vector3f(0, dz, 1),
+								new Vector3f(0, dz, 1), new Vector3f(1, dx, 0),
 								null);
 						normal.normalise();
 
@@ -145,12 +145,18 @@ public class Terrain {
 	}
 
 	public void pushIndex(int i) {
-		ibuf.put(index++);
+		ibuf.put(i);
+		index_count++;
+	}
+	
+	public void update() {
+		index_count = 0;
+		root.setActiveVertices();
+		ibuf.flip();
 	}
 
 	public void draw() {
-		int vs = index;
-		index = 0;
+		update();
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_NORMAL_ARRAY);
@@ -166,7 +172,7 @@ public class Terrain {
 		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, iHandle);
 		glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ibuf, GL_STATIC_DRAW_ARB);
 
-		glDrawElements(GL_TRIANGLES, vs, GL_UNSIGNED_INT, 0L);
+		glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0L);
 
 //		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 //		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);

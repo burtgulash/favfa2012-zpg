@@ -113,7 +113,7 @@ public class Main {
 		glEnable(GL_LIGHT1);
 		glEnable(GL_LIGHT2);
 
-		cam = new Vector3f(64, 0, 64);
+		cam = new Vector3f(-64, 0, -64);
 		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
 		
 		t.buildVBOs();
@@ -257,11 +257,11 @@ public class Main {
 		day_time = ((sun_angle + 180f) % 360f) / 360f;
 		
 		// TODO debug FPS begin
-		int fps = (int) (1000f / (float) delta);
-		System.out.print(fps + " " );
-		for (int q = 0; q < fps / 4; q++)
-			System.out.print("#");
-		System.out.println();
+//		int fps = (int) (1000f / (float) delta);
+//		System.out.print(fps + " " );
+//		for (int q = 0; q < fps / 4; q++)
+//			System.out.print("#");
+//		System.out.println();
 		// TODO debug end
 
 		Display.update();
