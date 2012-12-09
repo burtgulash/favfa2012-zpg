@@ -88,11 +88,111 @@ public class Terr {
 		return heights;
 	}
 
+	public float getH(int nx, int nz) {
+		nx = Math.max(0, Math.min(nx, width - 1));
+		nz = Math.max(0, Math.min(nz, height - 1));
+		
+		return hs[nx][nz];
+	}
+	
 	public float getY(float x, float z) {
 		x = Math.max(min_x, Math.min(x, max_x));
 		z = Math.max(min_z, Math.min(z, max_z));
-
+		
+		return getYcoons(x, z);
+	}
+	
+	public float getYstep(float x, float z) {
 		return hs[(int) (x + center_x)][(int) (z + center_z)];
+	}
+	public float getYcoons(float x, float z) {
+		x += center_x;
+		z += center_z;
+
+		int ax = (int) x;
+		int az = (int) z;
+		int bx = ax + 1;
+		int bz = az;
+		int cx = ax;
+		int cz = az + 1;
+		int dx = ax + 1;
+		int dz = az + 1;
+
+		float u = x - (float) ax;
+		float v = z - (float) az;
+
+		// TODO borders
+
+		float ay = getH(ax, az);
+		float cy = getH(cx, cz);
+		float by = getH(bx, bz);
+		float dy = getH(dx, dz);
+		
+		float dax = (by - getH(ax - 1, az)) / 2f;
+		float dbx = (getH(bx + 1, bz) - ay) / 2f;
+		float dcx = (dy - getH(cx - 1, cz)) / 2f;
+		float ddx = (getH(dx + 1, dz) - cy) / 2f;
+		
+		float daz = (cy - getH(ax, az - 1)) / 2f;
+		float dbz = (dy - getH(bx, bz - 1)) / 2f;
+		float dcz = (getH(cx, cz + 1) - ay) / 2f;
+		float ddz = (getH(dx, dz + 1) - by) / 2f;
+		
+
+		float e = hSpline(u, ay, by, dax, dbx);
+		float f = hSpline(u, cy, dy, dcx, ddx);
+		float g = hSpline(v, ay, cy, daz, dcz);
+		float h = hSpline(v, by, dy, dbz, ddz);
+
+		float lin_u = (h - g) * u + g;
+		float lin_v = (f - e) * v + e;
+
+		float p = (by - ay) * u + ay;
+		float q = (dy - cy) * u + cy;
+		float bilin = (q - p) * v + p;
+
+		return lin_u + lin_v - bilin;
+	}
+	
+	private float getYbilinear(float x, float z) {
+		x += center_x;
+		z += center_z;
+		
+		int ax = (int) x;
+		int az = (int) z;
+		int bx = ax + 1;
+		int bz = az;
+		int cx = ax;
+		int cz = az + 1;
+		int dx = ax + 1;
+		int dz = az + 1;
+
+		float ay = hs[ax][az];
+		float by = hs[bx][bz];
+		float cy = hs[cx][cz];
+		float dy = hs[dx][dz];
+		
+		float u = x - (float) ax;
+		float v = z - (float) az;
+		
+		float p = (by - ay) * u + ay;
+		float q = (dy - cy) * u + cy;
+
+		return (q - p) * v + p;
+	}
+
+	private float hSpline(float t, float y0, float y1, float yy0, float yy1) {
+		float s = 0;
+		
+		s += 2 * y0 - 2 * y1 + yy0 + yy1;
+		s *= t;
+		s += -3 * y0 + 3 * y1 - 2 * yy0 - yy1;
+		s *= t;
+		s += yy0;
+		s *= t;
+		s += y0;
+		
+		return s;
 	}
 	
 	public void buildVBOs() {
@@ -147,8 +247,6 @@ public class Terr {
 		ibuf.flip();
 	}
 		
-
-
 
 	public void draw() {
 		glEnableClientState(GL_VERTEX_ARRAY);

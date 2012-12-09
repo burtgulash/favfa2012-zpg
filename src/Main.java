@@ -25,7 +25,7 @@ public class Main {
 
 	private static long lastFrameTime;
 
-	static Terr t;
+	static Terrain t;
 
 	static float altitude = 0;
 	static float azimuth = 0;
@@ -50,7 +50,7 @@ public class Main {
 	public static void main(String[] args) {
 		String dir = System.getProperty("user.dir");
 		System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives");
-		t = new Terr(new File(dir + "/mapa128x128.raw"), 128, 128);
+		t = new Terrain(new File(dir + "/mapa128x128.raw"), 128, 128);
 
 		init();
 
@@ -113,7 +113,7 @@ public class Main {
 		glEnable(GL_LIGHT1);
 		glEnable(GL_LIGHT2);
 
-		cam = new Vector3f(0, 0, 0);
+		cam = new Vector3f(64, 0, 64);
 		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
 		
 		t.buildVBOs();
@@ -258,8 +258,10 @@ public class Main {
 		
 		// TODO debug FPS begin
 		int fps = (int) (1000f / (float) delta);
-		if (fps < 50)
-			System.out.printf("fps: %d%n", fps);
+		System.out.print(fps + " " );
+		for (int q = 0; q < fps / 4; q++)
+			System.out.print("#");
+		System.out.println();
 		// TODO debug end
 
 		Display.update();
