@@ -7,6 +7,7 @@ public class QuadNode {
 	boolean hasChildren;
 	boolean isActive;
 	boolean isSplit;
+	Bounds bounds;
 
 	NodeType nodeType;
 
@@ -40,6 +41,9 @@ public class QuadNode {
 		this.nodeSize = nodeSize;
 
 		addVertices();
+		bounds = new Bounds(tree.getV(vertexTopLeft.index),
+				tree.getV(vertexBottomRight.index));
+
 		if (!isLeaf())
 			addChildren();
 
@@ -57,6 +61,104 @@ public class QuadNode {
 
 	public boolean isLeaf() {
 		return nodeSize < 4;
+	}
+
+	public boolean canSplit() {
+		return nodeSize >= 2 && !isSplit;
+	}
+
+	public void split() {
+		// if (tree.CULLING_ENABLED && !isInView())
+		// return;
+
+		if (parent != null && !parent.isSplit)
+			parent.split();
+
+		activate();
+		if (canSplit()) {
+			if (hasChildren) {
+				childTopLeft.activate();
+				childTopRight.activate();
+				childBottomLeft.activate();
+				childBottomRight.activate();
+			}
+			
+			isSplit = true;
+			isActive = !hasChildren;
+			vertexTop.activated = true;
+			vertexRight.activated = true;
+			vertexBottom.activated = true;
+			vertexLeft.activated = true;
+			
+			fixNeighbors();
+			
+		}
+
+	}
+
+	private void ensureNeighborParentSplit(QuadNode neighbor) {
+		if (neighbor != null && neighbor.parent != null)
+			if (!neighbor.parent.isSplit)
+				neighbor.parent.split();
+	}
+
+	public void merge() {
+		vertexTop.activated = false;
+		vertexRight.activated = false;
+		vertexBottom.activated = false;
+		vertexLeft.activated = false;
+
+		if (!isRoot()) {
+			vertexTopLeft.activated = false;
+			vertexTopRight.activated = false;
+			vertexBottomRight.activated = false;
+			vertexBottomLeft.activated = false;
+		}
+
+		isSplit = false;
+		isActive = true;
+
+		if (hasChildren) {
+			if (childTopLeft.isSplit) {
+				childTopLeft.merge();
+				childTopLeft.isActive = false;
+			} else {
+				childTopLeft.vertexTop.activated = false;
+				childTopLeft.vertexRight.activated = false;
+				childTopLeft.vertexBottom.activated = false;
+				childTopLeft.vertexLeft.activated = false;
+			}
+
+			if (childTopRight.isSplit) {
+				childTopRight.merge();
+				childTopRight.isActive = false;
+			} else {
+				childTopRight.vertexTop.activated = false;
+				childTopRight.vertexRight.activated = false;
+				childTopRight.vertexBottom.activated = false;
+				childTopRight.vertexLeft.activated = false;
+			}
+
+			if (childBottomRight.isSplit) {
+				childBottomRight.merge();
+				childBottomRight.isActive = false;
+			} else {
+				childBottomRight.vertexTop.activated = false;
+				childBottomRight.vertexRight.activated = false;
+				childBottomRight.vertexBottom.activated = false;
+				childBottomRight.vertexLeft.activated = false;
+			}
+
+			if (childBottomLeft.isSplit) {
+				childBottomLeft.merge();
+				childBottomLeft.isActive = false;
+			} else {
+				childBottomLeft.vertexTop.activated = false;
+				childBottomLeft.vertexRight.activated = false;
+				childBottomLeft.vertexBottom.activated = false;
+				childBottomLeft.vertexLeft.activated = false;
+			}
+		}
 	}
 
 	private void activate() {
@@ -195,7 +297,10 @@ public class QuadNode {
 	}
 
 	void setActiveVertices() {
-		if (isSplit) {
+		// if (tree.CULLING_ENABLED && !isInView())
+		// return;
+
+		if (isSplit && hasChildren) {
 			childTopLeft.setActiveVertices();
 			childTopRight.setActiveVertices();
 			childBottomLeft.setActiveVertices();
@@ -240,6 +345,52 @@ public class QuadNode {
 		tree.pushIndex(vertexTopLeft.index);
 	}
 
+	public void setDepth(int d) {
+		if (parent != null && !parent.isSplit)
+			parent.setDepth(d - 1);
+
+		if (isLeaf() || depth > d)
+			return;
+		
+		activate();
+		if (depth == d) {
+			fixNeighbors();
+		}
+		if (depth < d && canSplit()) {
+			isSplit = true;
+			vertexTop.activated = true;
+			vertexRight.activated = true;
+			vertexBottom.activated = true;
+			vertexLeft.activated = true;
+			
+			
+			if (hasChildren) {
+				childTopLeft.setDepth(d);
+				childTopRight.setDepth(d);
+				childBottomLeft.setDepth(d);
+				childBottomRight.setDepth(d);
+	
+				isActive = false;
+			}
+		}
+	}
+
+	private void fixNeighbors() {
+		ensureNeighborParentSplit(neighborTop);
+		ensureNeighborParentSplit(neighborRight);
+		ensureNeighborParentSplit(neighborBottom);
+		ensureNeighborParentSplit(neighborLeft);
+
+		if (neighborTop != null)
+			neighborTop.vertexBottom.activated = true;
+		if (neighborRight != null)
+			neighborRight.vertexLeft.activated = true;
+		if (neighborBottom != null)
+			neighborBottom.vertexTop.activated = true;
+		if (neighborLeft != null)
+			neighborLeft.vertexRight.activated = true;
+	}
+
 	public void enforceMinimumDepth() {
 		if (depth < tree.MIN_DEPTH) {
 			if (hasChildren) {
@@ -262,5 +413,30 @@ public class QuadNode {
 			activate();
 			isSplit = false;
 		}
+	}
+
+	public boolean contains(float x, float z) {
+		return bounds.contains(x, z);
+	}
+
+	public QuadNode nodeWithPointMaxDepth(float x, float z, int maxDepth) {
+		if (!contains(x, z))
+			return null;
+
+		if (hasChildren && depth < maxDepth) {
+			if (childTopLeft.contains(x, z))
+				return childTopLeft.nodeWithPointMaxDepth(x, z, maxDepth);
+			if (childTopRight.contains(x, z))
+				return childTopRight.nodeWithPointMaxDepth(x, z, maxDepth);
+			if (childBottomRight.contains(x, z))
+				return childBottomRight.nodeWithPointMaxDepth(x, z, maxDepth);
+			return childBottomLeft.nodeWithPointMaxDepth(x, z, maxDepth);
+		}
+
+		return this;
+	}
+
+	public QuadNode deepestNodeWithPoint(float x, float z) {
+		return nodeWithPointMaxDepth(x, z, Integer.MAX_VALUE);
 	}
 }

@@ -178,7 +178,7 @@ public class Main {
 		glColor3f(.93f, .93f, .93f);
 
 		// Render terrain
-		t.draw();
+		t.draw(-cam.x, -cam.z);
 
 		// Buttons, keyboard, ...
 		int delta = getTimeDelta();
@@ -257,11 +257,11 @@ public class Main {
 		day_time = ((sun_angle + 180f) % 360f) / 360f;
 		
 		// TODO debug FPS begin
-//		int fps = (int) (1000f / (float) delta);
-//		System.out.print(fps + " " );
-//		for (int q = 0; q < fps / 4; q++)
-//			System.out.print("#");
-//		System.out.println();
+		int fps = (int) (1000f / (float) delta);
+		System.out.print(fps + " " );
+		for (int q = 0; q < fps / 4; q++)
+			System.out.print("#");
+		System.out.println();
 		// TODO debug end
 
 		Display.update();

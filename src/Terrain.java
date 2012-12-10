@@ -18,6 +18,7 @@ import static org.lwjgl.opengl.ARBVertexBufferObject.*;
 public class Terrain {
 	private int width, height;
 	private int nVertices;
+	private int scaleFactor;
 	private boolean loadFailed = true;
 	private float[][] hs;
 	public QuadNode root;
@@ -32,8 +33,9 @@ public class Terrain {
 	private final int SUBDIVISION_LVL = 3;
 	private final int SIZEOF_FLOAT = 4;
 	public final int ROOT_DEPTH = 1;
-	public final int MIN_DEPTH = 10;
-//	public final int MAX_DEPTH = 10;
+	public final int MIN_DEPTH = 7;
+	public final int MAX_DEPTH = 11;
+	public boolean CULLING_ENABLED = true;
 
 	public Terrain(File file, int w, int h) {
 		width = w;
@@ -43,16 +45,28 @@ public class Terrain {
 		if (loadFailed())
 			return;
 
-		int n = nSubdivisions(SUBDIVISION_LVL);
-		nVertices = n * n * (width + 1) * (height + 1);
+		scaleFactor = nSubdivisions(SUBDIVISION_LVL);
+		nVertices = scaleFactor * scaleFactor * (width + 1) * (height + 1);
 		createBuffers();
-		subdivide(n);
-		
-		rootNodeSize = n * width;
-		root = new QuadNode(NodeType.ROOT, ROOT_DEPTH, rootNodeSize, 0, null, this);
+		subdivide(scaleFactor);
+
+		rootNodeSize = scaleFactor * width;
+		root = new QuadNode(NodeType.ROOT, ROOT_DEPTH, rootNodeSize, 0, null,
+				this);
 
 		vbuf.flip();
 		nbuf.flip();
+	}
+
+	public float[] getV(int i) {
+		float[] v = new float[3];
+
+		i *= 3;
+		v[0] = vbuf.get(i);
+		v[1] = vbuf.get(i + 1);
+		v[2] = vbuf.get(i + 2);
+
+		return v;
 	}
 
 	public void buildVBOs() {
@@ -72,7 +86,7 @@ public class Terrain {
 	private void subdivide(int n) {
 		// + 1 ---> 129 x 129
 		float delta = 1f / (float) n;
-		
+
 		for (int i = 0; i < width; i++) {
 			for (int xi = 0; xi < n; xi++) {
 				float x = (float) i + ((float) xi / (float) n);
@@ -80,15 +94,15 @@ public class Terrain {
 					for (int zi = 0; zi < n; zi++) {
 						float z = (float) j + ((float) zi / (float) n);
 						float y = getY(x, z);
-						
+
 						addVertexNormal(x, y, z, delta);
 					}
 				}
-				
+
 				addVertexNormal(x, getY(x, height), height, delta);
 			}
 		}
-		
+
 		for (int j = 0; j < height + 1; j++) {
 			for (int zi = 0; zi < n; zi++) {
 				float z = (float) j + ((float) zi / (float) n);
@@ -96,14 +110,13 @@ public class Terrain {
 			}
 		}
 	}
-	
+
 	private void addVertexNormal(float x, float y, float z, float delta) {
 		float dx = (getY(x + delta, z) - getY(x - delta, z)) / (2 * delta);
 		float dz = (getY(x, z + delta) - getY(x, z - delta)) / (2 * delta);
 
-		Vector3f normal = Vector3f.cross(
-				new Vector3f(0, dz, 1), new Vector3f(1, dx, 0),
-				null);
+		Vector3f normal = Vector3f.cross(new Vector3f(0, dz, 1), new Vector3f(
+				1, dx, 0), null);
 		normal.normalise();
 
 		vbuf.put(x).put(y).put(z);
@@ -111,7 +124,7 @@ public class Terrain {
 	}
 
 	public float getY(float x, float z) {
-//		return getH((int) x, (int) z);
+		// return getH((int) x, (int) z);
 		return getYcoons(x, z);
 	}
 
@@ -132,17 +145,16 @@ public class Terrain {
 		float cy = getH(cx, cz);
 		float by = getH(bx, bz);
 		float dy = getH(dx, dz);
-		
+
 		float dax = (by - getH(ax - 1, az)) / 2f;
 		float dbx = (getH(bx + 1, bz) - ay) / 2f;
 		float dcx = (dy - getH(cx - 1, cz)) / 2f;
 		float ddx = (getH(dx + 1, dz) - cy) / 2f;
-		
+
 		float daz = (cy - getH(ax, az - 1)) / 2f;
 		float dbz = (dy - getH(bx, bz - 1)) / 2f;
 		float dcz = (getH(cx, cz + 1) - ay) / 2f;
 		float ddz = (getH(dx, dz + 1) - by) / 2f;
-		
 
 		float e = hSpline(u, ay, by, dax, dbx);
 		float f = hSpline(u, cy, dy, dcx, ddx);
@@ -158,7 +170,7 @@ public class Terrain {
 
 		return lin_u + lin_v - bilin;
 	}
-	
+
 	private float getH(int xi, int zi) {
 		xi = Math.max(0, Math.min(xi, width - 1));
 		zi = Math.max(0, Math.min(zi, height - 1));
@@ -168,7 +180,7 @@ public class Terrain {
 
 	private float hSpline(float t, float y0, float y1, float yy0, float yy1) {
 		float s = 0;
-		
+
 		s += 2 * y0 - 2 * y1 + yy0 + yy1;
 		s *= t;
 		s += -3 * y0 + 3 * y1 - 2 * yy0 - yy1;
@@ -176,10 +188,10 @@ public class Terrain {
 		s += yy0;
 		s *= t;
 		s += y0;
-		
+
 		return s;
 	}
-	
+
 	private int nSubdivisions(int lvl) {
 		int n = 1;
 		while (--lvl > 0)
@@ -219,7 +231,7 @@ public class Terrain {
 				hs[x][z] = (float) ((int) buf[x * height + z] & 0xFF) / 10f;
 				hs[x][z] /= METRES_PER_FLOAT;
 			}
-		
+
 		loadFailed = false;
 	}
 
@@ -227,16 +239,49 @@ public class Terrain {
 		ibuf.put(i);
 		index_count++;
 	}
-	
-	public void update() {
+
+	public void update(float x, float z) {
 		index_count = 0;
-		root.enforceMinimumDepth();
+		ibuf.clear();
+
+		root.merge();
+//		root.enforceMinimumDepth();
+
+		// QuadNode active = root.deepestNodeWithPoint(x, z);
+		// if (active != null)
+		// active.split();
+
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				float dx = x - (float) i;
+				float dz = z - (float) j;
+				double distance = (dx * dx + dz * dz) / (width * width / 8);
+
+				int maxDepth = depth(distance);
+//				System.out.println(maxDepth);
+//				System.out.println(distance);
+				QuadNode nodeAtPoint = root.nodeWithPointMaxDepth(i, j, 3);
+//				System.out.println(nodeAtPoint.depth);
+				//TODO
+				maxDepth = MAX_DEPTH;
+				if (nodeAtPoint != null)
+					nodeAtPoint.setDepth(7);
+			}
+		}
+		QuadNode active = root.deepestNodeWithPoint(x, z);
+//		if (active != null)
+//			active.split();
+
 		root.setActiveVertices();
 		ibuf.flip();
 	}
 
-	public void draw() {
-		update();
+	private int depth(double x) {
+		return (int) (Math.max(MIN_DEPTH, MAX_DEPTH * (1 - x)));
+	}
+
+	public void draw(float x, float z) {
+		update(x, z);
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_NORMAL_ARRAY);
@@ -254,8 +299,8 @@ public class Terrain {
 
 		glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0L);
 
-//		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-//		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+		// glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+		// glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
 		glDisableClientState(GL_NORMAL_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
