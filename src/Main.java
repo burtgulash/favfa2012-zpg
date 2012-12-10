@@ -1,4 +1,6 @@
 import java.io.File;
+import java.io.IOException;
+
 import java.nio.FloatBuffer;
 
 import org.lwjgl.BufferUtils;
@@ -62,13 +64,6 @@ public class Main {
 		String dir = System.getProperty("user.dir");
 		System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives");
 
-		width = height = 128;
-		t = new Terrain(new File(dir + "/mapa128x128.raw"), width, height);
-		if (t == null || t.loadFailed())
-			System.exit(1);
-
-		lastFrameTime = getTime();
-
 		try {
 			Display.setDisplayMode(new DisplayMode(800, 600));
 			Display.setTitle("ZPG 2012 - Tomas Marsalek (A10B0632P)");
@@ -77,11 +72,26 @@ public class Main {
 			System.exit(2);
 		}
 
+		width = height = 128;
+		t = new Terrain(new File(dir + "/mapa128x128.raw"), width, height);
+		if (t == null || t.loadFailed())
+			System.exit(1);
+
+		try {
+			t.loadTexture(dir + "/rough_terrain_texture_24-512x512.png");
+		} catch (IOException e) {
+			System.out.println("texture");
+			System.exit(1);
+		}
+
 		t.buildVBOs();
+
+		lastFrameTime = getTime();
 
 		// Cursor visible on/off
 		Mouse.setGrabbed(true);
 
+		glEnable(GL_TEXTURE_2D);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_NORMALIZE);
 		glEnable(GL_LIGHTING);

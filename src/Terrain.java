@@ -24,10 +24,11 @@ public class Terrain {
 	public QuadNode root;
 	public int rootNodeSize;
 
-	private FloatBuffer vbuf, nbuf;
+	private FloatBuffer vbuf, nbuf, tbuf;
 	private IntBuffer ibuf;
 	private int index_count;
-	private int vHandle, nHandle, iHandle;
+	private int vHandle, nHandle, iHandle, tHandle;
+	private int textureId;
 
 	private final float METRES_PER_FLOAT = 2f;
 	private final int SUBDIVISION_LVL = 3;
@@ -56,6 +57,7 @@ public class Terrain {
 
 		vbuf.flip();
 		nbuf.flip();
+		tbuf.flip();
 	}
 
 	public float[] getV(int i) {
@@ -72,6 +74,7 @@ public class Terrain {
 	private void createBuffers() {
 		vbuf = BufferUtils.createFloatBuffer(3 * nVertices);
 		nbuf = BufferUtils.createFloatBuffer(3 * nVertices);
+		tbuf = BufferUtils.createFloatBuffer(2 * nVertices);
 		ibuf = BufferUtils.createIntBuffer(12 * nVertices);
 	}
 
@@ -87,23 +90,23 @@ public class Terrain {
 						float z = (float) j + ((float) zi / (float) n);
 						float y = getY(x, z);
 
-						addVertexNormal(x, y, z, delta);
+						addVertexNormalTexture(x, y, z, delta);
 					}
 				}
 
-				addVertexNormal(x, getY(x, height), height, delta);
+				addVertexNormalTexture(x, getY(x, height), height, delta);
 			}
 		}
 
 		for (int j = 0; j < height + 1; j++) {
 			for (int zi = 0; zi < n; zi++) {
 				float z = (float) j + ((float) zi / (float) n);
-				addVertexNormal(width, getY(width, z), z, delta);
+				addVertexNormalTexture(width, getY(width, z), z, delta);
 			}
 		}
 	}
 
-	private void addVertexNormal(float x, float y, float z, float delta) {
+	private void addVertexNormalTexture(float x, float y, float z, float delta) {
 		float dx = (getY(x + delta, z) - getY(x - delta, z)) / (2 * delta);
 		float dz = (getY(x, z + delta) - getY(x, z - delta)) / (2 * delta);
 
@@ -111,6 +114,7 @@ public class Terrain {
 				1, dx, 0), null);
 		normal.normalise();
 
+		tbuf.put(x).put(z);
 		vbuf.put(x).put(y).put(z);
 		nbuf.put(normal.x).put(normal.y).put(normal.z);
 	}
@@ -274,35 +278,51 @@ public class Terrain {
 	}
 
 	public void buildVBOs() {
-		IntBuffer ib = BufferUtils.createIntBuffer(3);
+		IntBuffer ib = BufferUtils.createIntBuffer(4);
 		ARBBufferObject.glGenBuffersARB(ib);
 		vHandle = ib.get(0);
 		nHandle = ib.get(1);
 		iHandle = ib.get(2);
+		tHandle = ib.get(3);
+	}
+	
+	public void loadTexture(String fileName) throws IOException {
+		textureId = TextureLoader.loadTexture(fileName);
 	}
 
 	public void draw(float x, float z) {
 		update(x, z);
 
+		// Bind vertex buffer
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, vHandle);
 		glBufferDataARB(GL_ARRAY_BUFFER_ARB, vbuf, GL_STATIC_DRAW_ARB);
 		glVertexPointer(3, GL_FLOAT, 3 * SIZEOF_FLOAT, 0l);
 
+		// Bind normal buffer
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, nHandle);
 		glBufferDataARB(GL_ARRAY_BUFFER_ARB, nbuf, GL_STATIC_DRAW_ARB);
 		glNormalPointer(GL_FLOAT, 3 * SIZEOF_FLOAT, 0l);
 
+		// Bind index buffer
 		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, iHandle);
 		glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ibuf, GL_STATIC_DRAW_ARB);
+		
+		// Bind texture buffer
+		glBindBufferARB(GL_ARRAY_BUFFER_ARB, tHandle);
+		glBufferDataARB(GL_ARRAY_BUFFER_ARB, tbuf, GL_STATIC_DRAW_ARB);
+		glTexCoordPointer(2, GL_FLOAT, 2 * SIZEOF_FLOAT, 0l);
+		// TODO
+//		glBindTexture(GL_TEXTURE_2D, textureId);
 
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-		// glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_NORMAL_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 		glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0L);
 
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_NORMAL_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
