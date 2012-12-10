@@ -25,26 +25,25 @@ public class Main {
 
 	private static long lastFrameTime;
 
-	static Terrain t;
+	private static Terrain t;
+	private static int width, height;
 
-	static float altitude = 0;
-	static float azimuth = 0;
-	static boolean w, s, a, d;
-	static Vector3f cam;
-	static float speed = 0;
-	static Vector3f velocity = new Vector3f(0, 0, 0);
+	private static float altitude = 0;
+	private static float azimuth = 0;
+	private static boolean w, s, a, d;
+	private static Vector3f cam;
 
-	static final float MAX_LOOK_UP = 90f, MAX_LOOK_DOWN = -90f;
+	private static final float MAX_LOOK_UP = 90f, MAX_LOOK_DOWN = -90f;
 
-	static boolean wire_frame = false;
-	static int wire_frame_lock = 0;
-	static float v_invert = 1f;
-	static int v_invert_lock = 0;
+	private static boolean wire_frame = false;
+	private static int wire_frame_lock = 0;
+	private static float v_invert = 1f;
+	private static int v_invert_lock = 0;
 
-	static float sun_angle = 0f;
-	static float sun_intensity = 0f;
-	static double day_time = 0f;
-	static final float AMB_INT = .1f;
+	private static float sun_angle = 0f;
+	private static float sun_intensity = 0f;
+	private static double day_time = 0f;
+	private static final float AMB_INT = .1f;
 
 	// main
 	public static void main(String[] args) {
@@ -57,45 +56,15 @@ public class Main {
 		Display.destroy();
 	}
 
-	// hladka funkce urcující intenzitu svetla na zaklade casu
-	private static float getSunIntensity(double t) {
-		// -.5f -> center on midday
-		// 4 -> magic constant to make sky pretty
-		double arg = (t - .5d) * 4d;
-		return (float) Math.exp(-arg * arg);
-	}
-
-	// ziska systemovy cas
-	private static long getTime() {
-		return Sys.getTime() * 1000 / Sys.getTimerResolution();
-	}
-
-	// ziska casovy rozdil mezi po sobe jdoucimi snimky
-	private static int getTimeDelta() {
-		long currentTime = getTime();
-		int delta = (int) (currentTime - lastFrameTime);
-		lastFrameTime = currentTime;
-
-		return delta;
-	}
-
-	// pomocna metoda pro zabaleni pole floatu do floatbufferu
-	private static FloatBuffer asFloatBuffer(float[] fs) {
-		FloatBuffer buf = BufferUtils.createFloatBuffer(fs.length);
-		buf.put(fs);
-		buf.flip();
-		return buf;
-	}
-
-	// inicializace
 	private static void init() {
 		String dir = System.getProperty("user.dir");
 		System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives");
 
-		t = new Terrain(new File(dir + "/mapa128x128.raw"), 128, 128);
+		width = height = 128;
+		t = new Terrain(new File(dir + "/mapa128x128.raw"), width, height);
 		if (t == null || t.loadFailed())
 			System.exit(1);
-		
+
 		lastFrameTime = getTime();
 
 		try {
@@ -105,7 +74,7 @@ public class Main {
 		} catch (LWJGLException e) {
 			System.exit(2);
 		}
-		
+
 		t.buildVBOs();
 
 		// Cursor visible on/off
@@ -120,10 +89,8 @@ public class Main {
 
 		cam = new Vector3f(-64, 0, -64);
 		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
-		
 	}
 
-	// renderovani jednoho snimku
 	private static void render() {
 		float si = getSunIntensity(day_time);
 
@@ -142,7 +109,7 @@ public class Main {
 		// Modelview transformations
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glRotatef(-altitude, v_invert * 1f, 0f, 0f);
+		glRotatef(-altitude, v_invert * 1, 0, 0);
 		glRotatef(azimuth, 0, 1, 0);
 		glTranslatef(cam.x, cam.y, cam.z);
 
@@ -159,61 +126,38 @@ public class Main {
 
 		// Sun
 		glPushMatrix();
-		glRotatef(sun_angle, 0f, 0f, 1f);
+		glRotatef(sun_angle, 0, 0, 1);
 
-		// TODO POKUS slunce begin
 		glEnable(GL_POINT_SMOOTH);
 		glDisable(GL_LIGHTING);
-		glPointSize(30f);
+		glPointSize(30);
 		glBegin(GL_POINTS);
-		glColor3f(1f, 1f, 1f);
-		glVertex3f(0f, SUN_DISTANCE, 0f);
+		glColor3f(1, 1, 1);
+		glVertex3f(0, SUN_DISTANCE, 0);
 		glEnd();
 		glEnable(GL_LIGHTING);
 		glDisable(GL_POINT_SMOOTH);
-		// TODO POKUS slunce end
 
+		// ambient lights
 		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[] { si, si,
 				.85f * si, 1f }));
 		glLight(GL_LIGHT0, GL_POSITION, asFloatBuffer(new float[] { 0f,
 				SUN_DISTANCE, 0f, 1f }));
 		glPopMatrix();
 
-		glColor3f(.93f, .93f, .93f);
-
 		// Render terrain
+		glColor3f(.93f, .93f, .93f);
 		t.draw(-cam.x, -cam.z);
 
-		// Buttons, keyboard, ...
 		int delta = getTimeDelta();
-		speed = (float) delta * MOVEMENT_SPEED / 1000f;
+		float speed = (float) delta * MOVEMENT_SPEED / 1000f;
 
 		float azimuth_rads = (float) Math.toRadians(azimuth);
-		velocity.set(0, 0, 0);
-		if (w) {
-			velocity.x += Math.cos(azimuth_rads + Math.PI / 2d);
-			velocity.z += Math.sin(azimuth_rads + Math.PI / 2d);
-		}
-		if (s) {
-			velocity.x -= Math.cos(azimuth_rads + Math.PI / 2d);
-			velocity.z -= Math.sin(azimuth_rads + Math.PI / 2d);
-		}
-		if (a) {
-			velocity.x += Math.cos(azimuth_rads);
-			velocity.z += Math.sin(azimuth_rads);
-		}
-		if (d) {
-			velocity.x -= Math.cos(azimuth_rads);
-			velocity.z -= Math.sin(azimuth_rads);
-		}
-		if (velocity.length() > 0.1f)
-			velocity.normalise();
-		velocity.scale(speed);
 
-		cam.x += velocity.x;
-		cam.z += velocity.z;
-		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
+		updatePosition(azimuth_rads, speed);
+		updateSun(delta);
 
+		// Buttons, keyboard, ...
 		azimuth += Mouse.getDX();
 		float dy = Mouse.getDY();
 		if (altitude + dy > MAX_LOOK_DOWN && altitude + dy < MAX_LOOK_UP)
@@ -228,7 +172,115 @@ public class Main {
 		d = Keyboard.isKeyDown(Keyboard.KEY_D);
 		d = d || Keyboard.isKeyDown(Keyboard.KEY_RIGHT);
 
-		// WIREFRAME
+		handleWireframeMode();
+		handleVerticalInvert();
+
+		printFPS(delta);
+
+		Display.update();
+		Display.sync(FPS);
+	}
+
+	/**
+	 * smooth transition function for sun intensity
+	 * 
+	 * @param t
+	 *            time
+	 * @return sun intensity.
+	 */
+	private static float getSunIntensity(double t) {
+		// -.5f -> center on midday
+		// 4 -> magic constant to make sky pretty
+		double arg = (t - .5d) * 4d;
+		return (float) Math.exp(-arg * arg);
+	}
+
+	/**
+	 * Get system time.
+	 * 
+	 * @return system time in millis
+	 */
+	private static long getTime() {
+		return Sys.getTime() * 1000 / Sys.getTimerResolution();
+	}
+
+	/**
+	 * Get time difference between this and last frame.
+	 * 
+	 * @return time difference in millis.
+	 */
+	private static int getTimeDelta() {
+		long currentTime = getTime();
+		int delta = (int) (currentTime - lastFrameTime);
+		lastFrameTime = currentTime;
+
+		return delta;
+	}
+
+	/**
+	 * Helper function to create float buffer from float array.
+	 * 
+	 * @param fs
+	 *            float array
+	 * @return float buffer.
+	 */
+	private static FloatBuffer asFloatBuffer(float[] fs) {
+		FloatBuffer buf = BufferUtils.createFloatBuffer(fs.length);
+		buf.put(fs);
+		buf.flip();
+		return buf;
+	}
+
+	private static void updatePosition(float azimuth, float speed) {
+		Vector3f velocity = new Vector3f(0, 0, 0);
+
+		if (w) {
+			velocity.x += Math.cos(azimuth + Math.PI / 2d);
+			velocity.z += Math.sin(azimuth + Math.PI / 2d);
+		}
+		if (s) {
+			velocity.x -= Math.cos(azimuth + Math.PI / 2d);
+			velocity.z -= Math.sin(azimuth + Math.PI / 2d);
+		}
+		if (a) {
+			velocity.x += Math.cos(azimuth);
+			velocity.z += Math.sin(azimuth);
+		}
+		if (d) {
+			velocity.x -= Math.cos(azimuth);
+			velocity.z -= Math.sin(azimuth);
+		}
+
+		normaliseVelocity(cam.x, t.getY(-cam.x, -cam.z), cam.z, velocity);
+		velocity.scale(speed);
+
+		cam.x += velocity.x;
+		cam.y += velocity.y;
+		cam.z += velocity.z;
+
+		// enforce terrain bounds
+		cam.x = Math.max(-width, Math.min(cam.x, 0));
+		cam.z = Math.max(-height, Math.min(cam.z, 0));
+
+		// height correction
+		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
+	}
+
+	private static void normaliseVelocity(float x, float y, float z,
+			Vector3f velocity) {
+		if (velocity.lengthSquared() < .00001f)
+			return;
+
+		for (int i = 0; i < 10; i++) {
+			velocity.normalise();
+			velocity.y = -(t.getY(-(x + velocity.x), -(z + velocity.z)) - y);
+
+			if (Math.abs(velocity.lengthSquared() - 1f) < .001f)
+				break;
+		}
+	}
+
+	private static void handleWireframeMode() {
 		if (wire_frame_lock <= 0) {
 			if (Keyboard.isKeyDown(Keyboard.KEY_C)) {
 				wire_frame = !wire_frame;
@@ -241,8 +293,9 @@ public class Main {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		else
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
-		// VERTICAL INVERT
+	private static void handleVerticalInvert() {
 		if (v_invert_lock <= 0) {
 			if (Keyboard.isKeyDown(Keyboard.KEY_U)) {
 				v_invert *= -1;
@@ -252,23 +305,22 @@ public class Main {
 
 		} else
 			v_invert_lock--;
+	}
 
-		// Update time of day and angle of sun
-		sun_angle += (float) delta * 360f / (1000f * DAY_LENGTH);
+	private static void updateSun(int timeDelta) {
+		sun_angle += (float) timeDelta * 360f / (1000f * DAY_LENGTH);
 		sun_angle %= 360f;
-//		// TODO debug remove 60
-//		sun_angle = 60;
 		day_time = ((sun_angle + 180f) % 360f) / 360f;
-		
-		// TODO debug FPS begin
-		int fps = (int) (1000f / (float) delta);
-		System.out.print(fps + " " );
+
+	}
+
+	private static void printFPS(int timeDelta) {
+		int fps = (int) (1000f / (float) timeDelta);
+		if (fps > 50)
+			return;
+		System.out.print(fps + " ");
 		for (int q = 0; q < fps / 4; q++)
 			System.out.print("#");
 		System.out.println();
-		// TODO debug end
-
-		Display.update();
-		Display.sync(FPS);
 	}
 }
