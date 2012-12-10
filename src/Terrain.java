@@ -69,14 +69,6 @@ public class Terrain {
 		return v;
 	}
 
-	public void buildVBOs() {
-		IntBuffer ib = BufferUtils.createIntBuffer(3);
-		ARBBufferObject.glGenBuffersARB(ib);
-		vHandle = ib.get(0);
-		nHandle = ib.get(1);
-		iHandle = ib.get(2);
-	}
-
 	private void createBuffers() {
 		vbuf = BufferUtils.createFloatBuffer(3 * nVertices);
 		nbuf = BufferUtils.createFloatBuffer(3 * nVertices);
@@ -246,7 +238,7 @@ public class Terrain {
 		ibuf.clear();
 
 		root.merge();
-//		root.enforceMinimumDepth();
+		// root.enforceMinimumDepth();
 
 		// QuadNode active = root.deepestNodeWithPoint(x, z);
 		// if (active != null)
@@ -259,18 +251,19 @@ public class Terrain {
 				double distance = (dx * dx + dz * dz) / (width * width / 16);
 
 				int maxDepth = depth(distance);
-//				System.out.println(maxDepth);
-//				System.out.println(distance);
-				QuadNode nodeAtPoint = root.nodeWithPointMaxDepth(i, j, MIN_DEPTH);
-//				QuadNode nodeAtPoint = root.deepestNodeWithPoint(i, j);
+				// System.out.println(maxDepth);
+				// System.out.println(distance);
+				QuadNode nodeAtPoint = root.nodeWithPointMaxDepth(i, j,
+						MIN_DEPTH);
+				// QuadNode nodeAtPoint = root.deepestNodeWithPoint(i, j);
 				if (nodeAtPoint != null)
 					nodeAtPoint.setDepth(maxDepth);
-//					nodeAtPoint.split();
+				// nodeAtPoint.split();
 			}
 		}
-		QuadNode active = root.deepestNodeWithPoint(x, z);
-//		if (active != null)
-//			active.split();
+		// QuadNode active = root.deepestNodeWithPoint(x, z);
+		// if (active != null)
+		// active.split();
 
 		root.setActiveVertices();
 		ibuf.flip();
@@ -280,11 +273,16 @@ public class Terrain {
 		return (int) (Math.max(MIN_DEPTH, MAX_DEPTH * (1 - x)));
 	}
 
+	public void buildVBOs() {
+		IntBuffer ib = BufferUtils.createIntBuffer(3);
+		ARBBufferObject.glGenBuffersARB(ib);
+		vHandle = ib.get(0);
+		nHandle = ib.get(1);
+		iHandle = ib.get(2);
+	}
+
 	public void draw(float x, float z) {
 		update(x, z);
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_NORMAL_ARRAY);
 
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, vHandle);
 		glBufferDataARB(GL_ARRAY_BUFFER_ARB, vbuf, GL_STATIC_DRAW_ARB);
@@ -297,10 +295,13 @@ public class Terrain {
 		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, iHandle);
 		glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ibuf, GL_STATIC_DRAW_ARB);
 
-		glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0L);
-
-		// glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 		// glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_NORMAL_ARRAY);
+
+		glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0L);
 
 		glDisableClientState(GL_NORMAL_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);

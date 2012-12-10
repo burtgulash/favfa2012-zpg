@@ -19,7 +19,7 @@ public class Main {
 	private static final float MOVEMENT_SPEED = 10f / METRES_PER_FLOAT;
 	private static final float CAM_HEIGHT = 1.85f / METRES_PER_FLOAT;
 	private static final double DAY_LENGTH = 2 * 60;
-	private static final int FPS = 60;
+	private static final int V_SYNC = 60;
 
 	private static final float SUN_DISTANCE = 500f;
 
@@ -32,6 +32,8 @@ public class Main {
 	private static float azimuth = 0;
 	private static boolean w, s, a, d;
 	private static Vector3f cam;
+	private static boolean inAir = false;
+	private static Vector3f velocity = new Vector3f(0, 0, 0);
 
 	private static final float MAX_LOOK_UP = 90f, MAX_LOOK_DOWN = -90f;
 
@@ -41,9 +43,9 @@ public class Main {
 	private static int v_invert_lock = 0;
 
 	private static float sun_angle = 0f;
-	private static float sun_intensity = 0f;
 	private static double day_time = 0f;
 	private static final float AMB_INT = .1f;
+	private static final float GRAVITY = 20f;
 
 	// main
 	public static void main(String[] args) {
@@ -149,12 +151,51 @@ public class Main {
 		glColor3f(.93f, .93f, .93f);
 		t.draw(-cam.x, -cam.z);
 
+		// MOVEMENT
 		int delta = getTimeDelta();
-		float speed = (float) delta * MOVEMENT_SPEED / 1000f;
+		float time = (float) delta / 1000f;
+		// float speed = (float) delta * MOVEMENT_SPEED / 1000f;
 
 		float azimuth_rads = (float) Math.toRadians(azimuth);
 
-		updatePosition(azimuth_rads, speed);
+		if (!inAir) {
+			Vector3f newV = getVelocity(azimuth_rads, MOVEMENT_SPEED);
+			if (newV.lengthSquared() > .001f)
+				velocity = newV;
+			else
+				velocity.scale(.99f); // Friction
+
+			if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
+				inAir = true;
+				velocity.y += -MOVEMENT_SPEED * 5;
+			}
+		}
+
+		// GRAVITY
+		velocity.y -= -GRAVITY * time;
+
+		// this is distance = v * t
+		Vector3f distance = new Vector3f(velocity.x, velocity.y, velocity.z);
+		distance.scale(time);
+
+		cam.x += distance.x;
+		cam.y += distance.y;
+		cam.z += distance.z;
+
+		// enforce terrain bounds
+		cam.x = Math.max(-width, Math.min(cam.x, 0));
+		cam.z = Math.max(-height, Math.min(cam.z, 0));
+		// Collide with terrain
+
+		float collision = t.getY(-cam.x, -cam.z);
+		if (collision + CAM_HEIGHT >= -cam.y) {
+			inAir = false;
+			cam.y = Math.min(cam.y, -(collision + CAM_HEIGHT));
+		}
+
+		// height correction
+		// cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
+
 		updateSun(delta);
 
 		// Buttons, keyboard, ...
@@ -178,7 +219,7 @@ public class Main {
 		printFPS(delta);
 
 		Display.update();
-		Display.sync(FPS);
+		Display.sync(V_SYNC);
 	}
 
 	/**
@@ -231,51 +272,41 @@ public class Main {
 		return buf;
 	}
 
-	private static void updatePosition(float azimuth, float speed) {
-		Vector3f velocity = new Vector3f(0, 0, 0);
+	private static Vector3f getVelocity(float azimuth, float speed) {
+		Vector3f v = new Vector3f(0, 0, 0);
 
 		if (w) {
-			velocity.x += Math.cos(azimuth + Math.PI / 2d);
-			velocity.z += Math.sin(azimuth + Math.PI / 2d);
+			v.x += Math.cos(azimuth + Math.PI / 2d);
+			v.z += Math.sin(azimuth + Math.PI / 2d);
 		}
 		if (s) {
-			velocity.x -= Math.cos(azimuth + Math.PI / 2d);
-			velocity.z -= Math.sin(azimuth + Math.PI / 2d);
+			v.x -= Math.cos(azimuth + Math.PI / 2d);
+			v.z -= Math.sin(azimuth + Math.PI / 2d);
 		}
 		if (a) {
-			velocity.x += Math.cos(azimuth);
-			velocity.z += Math.sin(azimuth);
+			v.x += Math.cos(azimuth);
+			v.z += Math.sin(azimuth);
 		}
 		if (d) {
-			velocity.x -= Math.cos(azimuth);
-			velocity.z -= Math.sin(azimuth);
+			v.x -= Math.cos(azimuth);
+			v.z -= Math.sin(azimuth);
 		}
 
-		normaliseVelocity(cam.x, t.getY(-cam.x, -cam.z), cam.z, velocity);
-		velocity.scale(speed);
+		normaliseVelocity(cam.x, t.getY(-cam.x, -cam.z), cam.z, v);
+		v.scale(speed);
 
-		cam.x += velocity.x;
-		cam.y += velocity.y;
-		cam.z += velocity.z;
-
-		// enforce terrain bounds
-		cam.x = Math.max(-width, Math.min(cam.x, 0));
-		cam.z = Math.max(-height, Math.min(cam.z, 0));
-
-		// height correction
-		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
+		return v;
 	}
 
-	private static void normaliseVelocity(float x, float y, float z,
-			Vector3f velocity) {
-		if (velocity.lengthSquared() < .00001f)
+	private static void normaliseVelocity(float x, float y, float z, Vector3f v) {
+		if (v.lengthSquared() < .00001f)
 			return;
 
 		for (int i = 0; i < 10; i++) {
-			velocity.normalise();
-			velocity.y = -(t.getY(-(x + velocity.x), -(z + velocity.z)) - y);
+			v.normalise();
+			v.y = -(t.getY(-(x + v.x), -(z + v.z)) - y);
 
-			if (Math.abs(velocity.lengthSquared() - 1f) < .001f)
+			if (Math.abs(v.lengthSquared() - 1f) < .001f)
 				break;
 		}
 	}
@@ -316,8 +347,8 @@ public class Main {
 
 	private static void printFPS(int timeDelta) {
 		int fps = (int) (1000f / (float) timeDelta);
-		if (fps > 50)
-			return;
+		// if (fps > 50)
+		// return;
 		System.out.print(fps + " ");
 		for (int q = 0; q < fps / 4; q++)
 			System.out.print("#");
