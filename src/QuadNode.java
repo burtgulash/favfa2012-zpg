@@ -64,17 +64,20 @@ public class QuadNode {
 	}
 
 	public boolean canSplit() {
-		return nodeSize >= 2 && !isSplit;
+		return nodeSize >= 2;
 	}
 
 	public void split() {
+		split(true);
+	}
+	
+	public void split(boolean fix) {
 		// if (tree.CULLING_ENABLED && !isInView())
 		// return;
 
 		if (parent != null && !parent.isSplit)
-			parent.split();
+			parent.split(fix);
 
-		activate();
 		if (canSplit()) {
 			if (hasChildren) {
 				childTopLeft.activate();
@@ -83,17 +86,54 @@ public class QuadNode {
 				childBottomRight.activate();
 			}
 			
-			isSplit = true;
 			isActive = !hasChildren;
+			isSplit = true;
 			vertexTop.activated = true;
 			vertexRight.activated = true;
 			vertexBottom.activated = true;
 			vertexLeft.activated = true;
 			
-			fixNeighbors();
-			
+			if (fix)
+				fixNeighbors();
 		}
+	}
+	
+	public void setDepth(int d) {
+		if (!canSplit() || depth > d)
+			return;
+		
+		if (isLeaf() || depth == d) {
+			split(false);
+			return;
+		}
+		
+		if (hasChildren) {
+			childTopLeft.setDepth(d);
+			childTopRight.setDepth(d);
+			childBottomRight.setDepth(d);
+			childBottomLeft.setDepth(d);
+			
+			childTopLeft.fixNeighbors();
+			childTopRight.fixNeighbors();
+			childBottomRight.fixNeighbors();
+			childBottomLeft.fixNeighbors();
+		}
+	}
 
+	private void fixNeighbors() {
+		ensureNeighborParentSplit(neighborTop);
+		ensureNeighborParentSplit(neighborRight);
+		ensureNeighborParentSplit(neighborBottom);
+		ensureNeighborParentSplit(neighborLeft);
+
+		if (neighborTop != null)
+			neighborTop.vertexBottom.activated = true;
+		if (neighborRight != null)
+			neighborRight.vertexLeft.activated = true;
+		if (neighborBottom != null)
+			neighborBottom.vertexTop.activated = true;
+		if (neighborLeft != null)
+			neighborLeft.vertexRight.activated = true;
 	}
 
 	private void ensureNeighborParentSplit(QuadNode neighbor) {
@@ -345,51 +385,6 @@ public class QuadNode {
 		tree.pushIndex(vertexTopLeft.index);
 	}
 
-	public void setDepth(int d) {
-		if (parent != null && !parent.isSplit)
-			parent.setDepth(d - 1);
-
-		if (isLeaf() || depth > d)
-			return;
-		
-		activate();
-		if (depth == d) {
-			fixNeighbors();
-		}
-		if (depth < d && canSplit()) {
-			isSplit = true;
-			vertexTop.activated = true;
-			vertexRight.activated = true;
-			vertexBottom.activated = true;
-			vertexLeft.activated = true;
-			
-			
-			if (hasChildren) {
-				childTopLeft.setDepth(d);
-				childTopRight.setDepth(d);
-				childBottomLeft.setDepth(d);
-				childBottomRight.setDepth(d);
-	
-				isActive = false;
-			}
-		}
-	}
-
-	private void fixNeighbors() {
-		ensureNeighborParentSplit(neighborTop);
-		ensureNeighborParentSplit(neighborRight);
-		ensureNeighborParentSplit(neighborBottom);
-		ensureNeighborParentSplit(neighborLeft);
-
-		if (neighborTop != null)
-			neighborTop.vertexBottom.activated = true;
-		if (neighborRight != null)
-			neighborRight.vertexLeft.activated = true;
-		if (neighborBottom != null)
-			neighborBottom.vertexTop.activated = true;
-		if (neighborLeft != null)
-			neighborLeft.vertexRight.activated = true;
-	}
 
 	public void enforceMinimumDepth() {
 		if (depth < tree.MIN_DEPTH) {

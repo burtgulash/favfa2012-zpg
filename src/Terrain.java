@@ -33,7 +33,7 @@ public class Terrain {
 	private final int SUBDIVISION_LVL = 3;
 	private final int SIZEOF_FLOAT = 4;
 	public final int ROOT_DEPTH = 1;
-	public final int MIN_DEPTH = 7;
+	public final int MIN_DEPTH = 6;
 	public final int MAX_DEPTH = 11;
 	public boolean CULLING_ENABLED = true;
 
@@ -42,7 +42,7 @@ public class Terrain {
 		height = h;
 
 		getHeights(file);
-		if (loadFailed())
+		if (loadFailed)
 			return;
 
 		scaleFactor = nSubdivisions(SUBDIVISION_LVL);
@@ -199,7 +199,7 @@ public class Terrain {
 		return n;
 	}
 
-	private boolean loadFailed() {
+	public boolean loadFailed() {
 		return loadFailed;
 	}
 
@@ -222,6 +222,7 @@ public class Terrain {
 			System.err.println("File " + file.getName() + " not found.");
 			return;
 		} catch (IOException e) {
+			System.err.println("Can not load terrain.");
 			loadFailed = true;
 			return;
 		}
@@ -255,17 +256,16 @@ public class Terrain {
 			for (int j = 0; j < height; j++) {
 				float dx = x - (float) i;
 				float dz = z - (float) j;
-				double distance = (dx * dx + dz * dz) / (width * width / 8);
+				double distance = (dx * dx + dz * dz) / (width * width / 16);
 
 				int maxDepth = depth(distance);
 //				System.out.println(maxDepth);
 //				System.out.println(distance);
-				QuadNode nodeAtPoint = root.nodeWithPointMaxDepth(i, j, 3);
-//				System.out.println(nodeAtPoint.depth);
-				//TODO
-				maxDepth = MAX_DEPTH;
+				QuadNode nodeAtPoint = root.nodeWithPointMaxDepth(i, j, MIN_DEPTH);
+//				QuadNode nodeAtPoint = root.deepestNodeWithPoint(i, j);
 				if (nodeAtPoint != null)
-					nodeAtPoint.setDepth(7);
+					nodeAtPoint.setDepth(maxDepth);
+//					nodeAtPoint.split();
 			}
 		}
 		QuadNode active = root.deepestNodeWithPoint(x, z);

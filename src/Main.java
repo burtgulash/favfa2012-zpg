@@ -48,10 +48,6 @@ public class Main {
 
 	// main
 	public static void main(String[] args) {
-		String dir = System.getProperty("user.dir");
-		System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives");
-		t = new Terrain(new File(dir + "/mapa128x128.raw"), 128, 128);
-
 		init();
 
 		while (!Display.isCloseRequested()
@@ -93,15 +89,24 @@ public class Main {
 
 	// inicializace
 	private static void init() {
+		String dir = System.getProperty("user.dir");
+		System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives");
+
+		t = new Terrain(new File(dir + "/mapa128x128.raw"), 128, 128);
+		if (t == null || t.loadFailed())
+			System.exit(1);
+		
 		lastFrameTime = getTime();
 
 		try {
 			Display.setDisplayMode(new DisplayMode(800, 600));
-			Display.setTitle("ZPG 2012");
+			Display.setTitle("ZPG 2012 - Tomas Marsalek (A10B0632P)");
 			Display.create();
 		} catch (LWJGLException e) {
 			System.exit(2);
 		}
+		
+		t.buildVBOs();
 
 		// Cursor visible on/off
 		Mouse.setGrabbed(true);
@@ -116,7 +121,6 @@ public class Main {
 		cam = new Vector3f(-64, 0, -64);
 		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
 		
-		t.buildVBOs();
 	}
 
 	// renderovani jednoho snimku
@@ -252,8 +256,8 @@ public class Main {
 		// Update time of day and angle of sun
 		sun_angle += (float) delta * 360f / (1000f * DAY_LENGTH);
 		sun_angle %= 360f;
-		// TODO debug remove 60
-		sun_angle = 60;
+//		// TODO debug remove 60
+//		sun_angle = 60;
 		day_time = ((sun_angle + 180f) % 360f) / 360f;
 		
 		// TODO debug FPS begin
