@@ -68,15 +68,11 @@ public class QuadNode {
 	}
 
 	public void split() {
-		split(true);
-	}
-	
-	public void split(boolean fix) {
 		// if (tree.CULLING_ENABLED && !isInView())
 		// return;
 
 		if (parent != null && !parent.isSplit)
-			parent.split(fix);
+			parent.split();
 
 		if (canSplit()) {
 			if (hasChildren) {
@@ -85,38 +81,38 @@ public class QuadNode {
 				childBottomLeft.activate();
 				childBottomRight.activate();
 			}
-			
+
 			isActive = !hasChildren;
 			isSplit = true;
 			vertexTop.activated = true;
 			vertexRight.activated = true;
 			vertexBottom.activated = true;
 			vertexLeft.activated = true;
-			
-			if (fix)
-				fixNeighbors();
+
+			fixNeighbors();
 		}
 	}
-	
+
 	public void setDepth(int d) {
-		if (!canSplit() || depth > d)
+		if (depth > d)
 			return;
-		
-		if (isLeaf() || depth == d) {
-			split(false);
-			return;
-		}
-		
-		if (hasChildren) {
-			childTopLeft.setDepth(d);
-			childTopRight.setDepth(d);
-			childBottomRight.setDepth(d);
-			childBottomLeft.setDepth(d);
-			
-			childTopLeft.fixNeighbors();
-			childTopRight.fixNeighbors();
-			childBottomRight.fixNeighbors();
-			childBottomLeft.fixNeighbors();
+
+		if (canSplit()) {
+			vertexTop.activated = true;
+			vertexRight.activated = true;
+			vertexBottom.activated = true;
+			vertexLeft.activated = true;
+			isSplit = true;
+
+			if (hasChildren && depth < d) {
+				childTopLeft.setDepth(d);
+				childTopRight.setDepth(d);
+				childBottomRight.setDepth(d);
+				childBottomLeft.setDepth(d);
+			} else {
+				activate();
+				fixNeighbors();
+			}
 		}
 	}
 
@@ -383,31 +379,6 @@ public class QuadNode {
 			tree.pushIndex(vertexLeft.index);
 		}
 		tree.pushIndex(vertexTopLeft.index);
-	}
-
-
-	public void enforceMinimumDepth() {
-		if (depth < tree.MIN_DEPTH) {
-			if (hasChildren) {
-				isActive = false;
-				isSplit = true;
-
-				childTopLeft.enforceMinimumDepth();
-				childTopRight.enforceMinimumDepth();
-				childBottomLeft.enforceMinimumDepth();
-				childBottomRight.enforceMinimumDepth();
-			} else {
-				activate();
-				isSplit = false;
-			}
-
-			return;
-		}
-
-		if (depth == tree.MIN_DEPTH) {
-			activate();
-			isSplit = false;
-		}
 	}
 
 	public boolean contains(float x, float z) {

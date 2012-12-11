@@ -21,7 +21,9 @@ public class Main {
 	private static final float MOVEMENT_SPEED = 10f / METRES_PER_FLOAT;
 	private static final float CAM_HEIGHT = 1.85f / METRES_PER_FLOAT;
 	private static final double DAY_LENGTH = 2 * 60;
-	private static final int V_SYNC = 60;
+	// TODO
+
+	private static final int V_SYNC = 60 * 10;
 
 	private static final float SUN_DISTANCE = 500f;
 
@@ -233,7 +235,7 @@ public class Main {
 		handleWireframeMode();
 		handleVerticalInvert();
 
-		// printFPS(delta);
+		printFPS(delta);
 
 		Display.update();
 		Display.sync(V_SYNC);

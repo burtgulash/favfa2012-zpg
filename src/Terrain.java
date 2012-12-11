@@ -243,29 +243,47 @@ public class Terrain {
 		ibuf.clear();
 
 		root.merge();
-		// root.enforceMinimumDepth();
+		root.setDepth(5);
 
 		// QuadNode active = root.deepestNodeWithPoint(x, z);
 		// if (active != null)
 		// active.split();
 
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-				float dx = x - (float) i;
-				float dz = z - (float) j;
+		QuadNode xnode = root.nodeWithPointMaxDepth(0, 0, 5);
+		QuadNode znode;
+		while (xnode != null) {
+			znode = xnode;
+			while (znode != null) {
+				float[] point = getV(znode.position);
+				float dx = x - point[0];
+				float dz = z - point[2];
 				double distance = (dx * dx + dz * dz) / (width * width / 16);
 
 				int maxDepth = depth(distance);
-				// System.out.println(maxDepth);
-				// System.out.println(distance);
-				QuadNode nodeAtPoint = root.nodeWithPointMaxDepth(i, j,
-						MIN_DEPTH);
-				// QuadNode nodeAtPoint = root.deepestNodeWithPoint(i, j);
-				if (nodeAtPoint != null)
-					nodeAtPoint.setDepth(maxDepth);
-				// nodeAtPoint.split();
+//				znode.split();
+				znode.setDepth(maxDepth);
+				
+				
+				znode = znode.neighborBottom;
 			}
+			xnode = xnode.neighborRight;
 		}
+//		for (int i = 0; i < width; i++, xnode = xnode.neighborRight) {
+//			znode = xnode;
+//			for (int j = 0; j < height; j++, znode = znode.neighborTop) {
+//				float dx = x - (float) i;
+//				float dz = z - (float) j;
+//				double distance = (dx * dx + dz * dz) / (width * width / 16);
+//
+//				int maxDepth = depth(distance);
+//				// System.out.println(maxDepth);
+//				// System.out.println(distance);
+//				// if (nodeAtPoint != null) {
+//				// nodeAtPoint.split();
+//				// nodeAtPoint.setDepth2(maxDepth);
+//				// }
+//			}
+//		}
 		// QuadNode active = root.deepestNodeWithPoint(x, z);
 		// if (active != null)
 		// active.split();
@@ -286,7 +304,7 @@ public class Terrain {
 		iHandle = ib.get(2);
 		tHandle = ib.get(3);
 	}
-	
+
 	public void loadTexture(String fileName) throws IOException {
 		textureId = TextureLoader.loadTexture(fileName);
 	}
@@ -307,13 +325,13 @@ public class Terrain {
 		// Bind index buffer
 		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, iHandle);
 		glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ibuf, GL_STATIC_DRAW_ARB);
-		
+
 		// Bind texture buffer
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, tHandle);
 		glBufferDataARB(GL_ARRAY_BUFFER_ARB, tbuf, GL_STATIC_DRAW_ARB);
 		glTexCoordPointer(2, GL_FLOAT, 2 * SIZEOF_FLOAT, 0l);
 		// TODO
-//		glBindTexture(GL_TEXTURE_2D, textureId);
+		// glBindTexture(GL_TEXTURE_2D, textureId);
 
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
