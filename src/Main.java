@@ -78,7 +78,8 @@ public class Main {
 			System.exit(1);
 
 		try {
-			t.loadTexture(dir + "/rough_terrain_texture_24-512x512.png");
+			// t.loadTexture(dir + "/rough_terrain_texture_24-512x512.png");
+			t.loadTexture(dir + "/sand.png");
 		} catch (IOException e) {
 			System.out.println("texture");
 			System.exit(1);
@@ -91,13 +92,16 @@ public class Main {
 		// Cursor visible on/off
 		Mouse.setGrabbed(true);
 
-		glEnable(GL_TEXTURE_2D);
+		glShadeModel(GL_SMOOTH);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_NORMALIZE);
+		glEnable(GL_COLOR_MATERIAL);
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
 		glEnable(GL_LIGHT1);
 		glEnable(GL_LIGHT2);
+		glLightModel(GL_LIGHT_MODEL_AMBIENT, asFloatBuffer(new float[] { .02f,
+				.02f, .02f, 1f }));
 
 		cam = new Vector3f(-64, 0, -64);
 		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
@@ -108,8 +112,6 @@ public class Main {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(si * .9f, si * .9f, si, 1f);
-		// TODO remove
-		si = .6f;
 
 		// Perspective transformations
 		glMatrixMode(GL_PROJECTION);
@@ -128,13 +130,13 @@ public class Main {
 		// Ambient light
 		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT,
 				AMB_INT, AMB_INT, 1f }));
-		glLight(GL_LIGHT1, GL_POSITION, asFloatBuffer(new float[] { 100f, 100f,
-				100f, 1f }));
+		glLight(GL_LIGHT1, GL_POSITION, asFloatBuffer(new float[] { width,
+				SUN_DISTANCE, height, 1f }));
 
 		glLight(GL_LIGHT2, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT,
 				AMB_INT, AMB_INT, 1f }));
-		glLight(GL_LIGHT2, GL_POSITION, asFloatBuffer(new float[] { -100f,
-				100f, -100f, 1f }));
+		glLight(GL_LIGHT2, GL_POSITION, asFloatBuffer(new float[] { 0,
+				SUN_DISTANCE, height, 1f }));
 
 		// Sun
 		glPushMatrix();
@@ -150,16 +152,21 @@ public class Main {
 		glEnable(GL_LIGHTING);
 		glDisable(GL_POINT_SMOOTH);
 
-		// ambient lights
-		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[] { si, si,
-				.85f * si, 1f }));
+		// sun
+		float ri = (1 - AMB_INT) * si;
+		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[] { ri, ri,
+				.98f * ri, 1f }));
+		glLight(GL_LIGHT0, GL_AMBIENT, asFloatBuffer(new float[] { ri * .05f,
+				ri * .05f, ri * .07f, 1f }));
 		glLight(GL_LIGHT0, GL_POSITION, asFloatBuffer(new float[] { 0f,
 				SUN_DISTANCE, 0f, 1f }));
 		glPopMatrix();
 
 		// Render terrain
-		glColor3f(.93f, .93f, .93f);
+		glColor3f(1, 1, 1);
+		glEnable(GL_TEXTURE_2D);
 		t.draw(-cam.x, -cam.z);
+		glDisable(GL_TEXTURE_2D);
 
 		// MOVEMENT
 		int delta = getTimeDelta();
@@ -226,7 +233,7 @@ public class Main {
 		handleWireframeMode();
 		handleVerticalInvert();
 
-		printFPS(delta);
+		// printFPS(delta);
 
 		Display.update();
 		Display.sync(V_SYNC);

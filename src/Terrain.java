@@ -30,13 +30,14 @@ public class Terrain {
 	private int vHandle, nHandle, iHandle, tHandle;
 	private int textureId;
 
+	private final float TEXTURE_MAGNIFICATION = 6f;
 	private final float METRES_PER_FLOAT = 2f;
 	private final int SUBDIVISION_LVL = 3;
 	private final int SIZEOF_FLOAT = 4;
 	public final int ROOT_DEPTH = 1;
 	public final int MIN_DEPTH = 6;
 	public final int MAX_DEPTH = 11;
-	public boolean CULLING_ENABLED = true;
+	public final boolean CULLING_ENABLED = true;
 
 	public Terrain(File file, int w, int h) {
 		width = w;
@@ -114,7 +115,7 @@ public class Terrain {
 				1, dx, 0), null);
 		normal.normalise();
 
-		tbuf.put(x).put(z);
+		tbuf.put(x / TEXTURE_MAGNIFICATION).put(z / TEXTURE_MAGNIFICATION);
 		vbuf.put(x).put(y).put(z);
 		nbuf.put(normal.x).put(normal.y).put(normal.z);
 	}
