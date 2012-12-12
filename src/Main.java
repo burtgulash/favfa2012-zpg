@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import java.nio.FloatBuffer;
@@ -23,11 +24,12 @@ public class Main {
 	private static final double DAY_LENGTH = 2 * 60;
 	// TODO
 
-	private static final int V_SYNC = 60 * 10;
+	private static final int V_SYNC = 60*6;
 
 	private static final float SUN_DISTANCE = 500f;
 
 	private static long lastFrameTime;
+	public static float[][] clipPlanes;
 
 	private static Terrain t;
 	private static int width, height;
@@ -75,9 +77,15 @@ public class Main {
 		}
 
 		width = height = 128;
-		t = new Terrain(new File(dir + "/mapa128x128.raw"), width, height);
-		if (t == null || t.loadFailed())
+		try {
+			t = new Terrain(new File(dir + "/mapa128x128.raw"), width, height);
+		} catch (FileNotFoundException e) {
+			System.err.println("File not found");
 			System.exit(1);
+		} catch (IOException e) {
+			System.err.println("Can not load terrain.");
+			System.exit(1);
+		}
 
 		try {
 			// t.loadTexture(dir + "/rough_terrain_texture_24-512x512.png");
@@ -93,6 +101,11 @@ public class Main {
 
 		// Cursor visible on/off
 		Mouse.setGrabbed(true);
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_NORMAL_ARRAY);
+		if (t.useTexture())
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 		glShadeModel(GL_SMOOTH);
 		glEnable(GL_DEPTH_TEST);
@@ -165,6 +178,7 @@ public class Main {
 		glPopMatrix();
 
 		// Render terrain
+		getClip();
 		glColor3f(1, 1, 1);
 		glEnable(GL_TEXTURE_2D);
 		t.draw(-cam.x, -cam.z);
@@ -178,6 +192,7 @@ public class Main {
 		float azimuth_rads = (float) Math.toRadians(azimuth);
 
 		if (!inAir) {
+			// TODO corner bug
 			Vector3f newV = getVelocity(azimuth_rads, MOVEMENT_SPEED);
 			if (newV.lengthSquared() > .001f)
 				velocity = newV;
@@ -240,6 +255,35 @@ public class Main {
 		Display.update();
 		Display.sync(V_SYNC);
 	}
+
+	private static void getClip() {
+		float[] modelViewMatrix = new float[16];
+		float[] projectionMatrix = new float[16];
+		float[][] product = new float[4][4];
+		FloatBuffer tmp = BufferUtils.createFloatBuffer(16);
+
+		glGetFloat(GL_MODELVIEW_MATRIX, tmp);
+		tmp.get(modelViewMatrix);
+		tmp.clear();
+
+		glGetFloat(GL_PROJECTION_MATRIX, tmp);
+		tmp.get(projectionMatrix);
+
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				for (int k = 0; k < 4; k++)
+					product[j][i] += projectionMatrix[k * 4 + j]
+							* modelViewMatrix[i * 4 + k];
+
+		clipPlanes = new float[6][];
+		float[] p3 = product[3];
+		for (int i = 0; i < 3; i++) {
+			float[] p = product[i];
+			clipPlanes[i * 2] = new float[] {p3[0] + p[0], p3[1] + p[1], p3[2] + p[2], p3[3] + p[3]};
+			clipPlanes[i * 2 + 1] = new float[] {p3[0] - p[0], p3[1] - p[1], p3[2] - p[2], p3[3] - p[3]};
+		}
+	}
+
 
 	/**
 	 * smooth transition function for sun intensity

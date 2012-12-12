@@ -2,7 +2,6 @@ import static org.lwjgl.opengl.GL11.*;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.FloatBuffer;
@@ -19,7 +18,7 @@ public class Terrain {
 	private int width, height;
 	private int nVertices;
 	private int scaleFactor;
-	private boolean loadFailed = true;
+	private boolean useTexture;
 	private float[][] hs;
 	public QuadNode root;
 	public int rootNodeSize;
@@ -28,24 +27,21 @@ public class Terrain {
 	private IntBuffer ibuf;
 	private int index_count;
 	private int vHandle, nHandle, iHandle, tHandle;
-	private int textureId;
 
 	private final float TEXTURE_MAGNIFICATION = 6f;
 	private final float METRES_PER_FLOAT = 2f;
-	private final int SUBDIVISION_LVL = 3;
+	private final int SUBDIVISION_LVL = 4;
 	private final int SIZEOF_FLOAT = 4;
 	public final int ROOT_DEPTH = 1;
-	public final int MIN_DEPTH = 6;
-	public final int MAX_DEPTH = 11;
+	public final int MIN_DEPTH = 7;
+	public final int MAX_DEPTH = 12;
 	public final boolean CULLING_ENABLED = true;
 
-	public Terrain(File file, int w, int h) {
+	public Terrain(File file, int w, int h) throws IOException {
 		width = w;
 		height = h;
 
 		getHeights(file);
-		if (loadFailed)
-			return;
 
 		scaleFactor = nSubdivisions(SUBDIVISION_LVL);
 		nVertices = scaleFactor * scaleFactor * (width + 1) * (height + 1);
@@ -59,17 +55,16 @@ public class Terrain {
 		vbuf.flip();
 		nbuf.flip();
 		tbuf.flip();
+
 	}
 
-	public float[] getV(int i) {
-		float[] v = new float[3];
-
+	public Vector3f getV(int i) {
 		i *= 3;
-		v[0] = vbuf.get(i);
-		v[1] = vbuf.get(i + 1);
-		v[2] = vbuf.get(i + 2);
+		return new Vector3f(vbuf.get(i), vbuf.get(i + 1), vbuf.get(i + 2));
+	}
 
-		return v;
+	public boolean useTexture() {
+		return useTexture;
 	}
 
 	private void createBuffers() {
@@ -80,7 +75,6 @@ public class Terrain {
 	}
 
 	private void subdivide(int n) {
-		// + 1 ---> 129 x 129
 		float delta = 1f / (float) n;
 
 		for (int i = 0; i < width; i++) {
@@ -121,7 +115,6 @@ public class Terrain {
 	}
 
 	public float getY(float x, float z) {
-		// return getH((int) x, (int) z);
 		return getYcoons(x, z);
 	}
 
@@ -196,41 +189,25 @@ public class Terrain {
 		return n;
 	}
 
-	public boolean loadFailed() {
-		return loadFailed;
-	}
-
-	private void getHeights(File file) {
+	private void getHeights(File file) throws IOException {
 		byte[] buf = new byte[width * height];
 		hs = new float[width][height];
 
 		int len = Math.min(buf.length, (int) file.length());
 		int bytes_received = 0;
 
-		try {
-			InputStream in = new BufferedInputStream(new FileInputStream(file));
-			while (bytes_received < len)
-				bytes_received += in.read(buf, bytes_received, len
-						- bytes_received);
+		InputStream in = new BufferedInputStream(new FileInputStream(file));
+		while (bytes_received < len)
+			bytes_received += in
+					.read(buf, bytes_received, len - bytes_received);
 
-			in.close();
-		} catch (FileNotFoundException e) {
-			loadFailed = true;
-			System.err.println("File " + file.getName() + " not found.");
-			return;
-		} catch (IOException e) {
-			System.err.println("Can not load terrain.");
-			loadFailed = true;
-			return;
-		}
+		in.close();
 
 		for (int x = 0; x < width; x++)
 			for (int z = 0; z < height; z++) {
 				hs[x][z] = (float) ((int) buf[x * height + z] & 0xFF) / 10f;
 				hs[x][z] /= METRES_PER_FLOAT;
 			}
-
-		loadFailed = false;
 	}
 
 	public void pushIndex(int i) {
@@ -239,54 +216,34 @@ public class Terrain {
 	}
 
 	public void update(float x, float z) {
+		System.out.printf("drawing %d vertices%n", index_count);
+		
 		index_count = 0;
 		ibuf.clear();
 
 		root.merge();
-		root.setDepth(5);
+		root.setDepth(MIN_DEPTH);
 
-		// QuadNode active = root.deepestNodeWithPoint(x, z);
-		// if (active != null)
-		// active.split();
-
-		QuadNode xnode = root.nodeWithPointMaxDepth(0, 0, 5);
+		QuadNode xnode = root.nodeWithPointMaxDepth(0, 0, MIN_DEPTH);
 		QuadNode znode;
 		while (xnode != null) {
 			znode = xnode;
 			while (znode != null) {
-				float[] point = getV(znode.position);
-				float dx = x - point[0];
-				float dz = z - point[2];
+				Vector3f point = getV(znode.position);
+				float dx = x - point.x;
+				float dz = z - point.z;
 				double distance = (dx * dx + dz * dz) / (width * width / 16);
 
 				int maxDepth = depth(distance);
-//				znode.split();
 				znode.setDepth(maxDepth);
-				
-				
+
 				znode = znode.neighborBottom;
 			}
 			xnode = xnode.neighborRight;
 		}
-//		for (int i = 0; i < width; i++, xnode = xnode.neighborRight) {
-//			znode = xnode;
-//			for (int j = 0; j < height; j++, znode = znode.neighborTop) {
-//				float dx = x - (float) i;
-//				float dz = z - (float) j;
-//				double distance = (dx * dx + dz * dz) / (width * width / 16);
-//
-//				int maxDepth = depth(distance);
-//				// System.out.println(maxDepth);
-//				// System.out.println(distance);
-//				// if (nodeAtPoint != null) {
-//				// nodeAtPoint.split();
-//				// nodeAtPoint.setDepth2(maxDepth);
-//				// }
-//			}
-//		}
-		// QuadNode active = root.deepestNodeWithPoint(x, z);
-		// if (active != null)
-		// active.split();
+
+		QuadNode active = root.deepestNodeWithPoint(x, z);
+		active.split();
 
 		root.setActiveVertices();
 		ibuf.flip();
@@ -303,14 +260,6 @@ public class Terrain {
 		nHandle = ib.get(1);
 		iHandle = ib.get(2);
 		tHandle = ib.get(3);
-	}
-
-	public void loadTexture(String fileName) throws IOException {
-		textureId = TextureLoader.loadTexture(fileName);
-	}
-
-	public void draw(float x, float z) {
-		update(x, z);
 
 		// Bind vertex buffer
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, vHandle);
@@ -322,27 +271,30 @@ public class Terrain {
 		glBufferDataARB(GL_ARRAY_BUFFER_ARB, nbuf, GL_STATIC_DRAW_ARB);
 		glNormalPointer(GL_FLOAT, 3 * SIZEOF_FLOAT, 0l);
 
-		// Bind index buffer
-		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, iHandle);
-		glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ibuf, GL_STATIC_DRAW_ARB);
-
 		// Bind texture buffer
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, tHandle);
 		glBufferDataARB(GL_ARRAY_BUFFER_ARB, tbuf, GL_STATIC_DRAW_ARB);
 		glTexCoordPointer(2, GL_FLOAT, 2 * SIZEOF_FLOAT, 0l);
-		// TODO
-		// glBindTexture(GL_TEXTURE_2D, textureId);
 
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+	}
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	public void loadTexture(String fileName) throws IOException {
+		try {
+			TextureLoader.loadTexture(fileName);
+			useTexture = true;
+		} catch (IOException e) {
+			useTexture = false;
+		}
+	}
+
+	public void draw(float x, float z) {
+		update(x, z);
+
+		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, iHandle);
+		glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ibuf, GL_STATIC_DRAW_ARB);
 
 		glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0L);
 
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_NORMAL_ARRAY);
-		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 }

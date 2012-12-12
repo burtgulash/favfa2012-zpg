@@ -41,11 +41,20 @@ public class QuadNode {
 		this.nodeSize = nodeSize;
 
 		addVertices();
-		bounds = new Bounds(tree.getV(vertexTopLeft.index),
-				tree.getV(vertexBottomRight.index));
+		bounds = new Bounds(tree.getV(vertexCenter.index));
+		bounds.update(tree.getV(vertexTopLeft.index));
+		bounds.update(tree.getV(vertexTop.index));
+		bounds.update(tree.getV(vertexTopRight.index));
+		bounds.update(tree.getV(vertexRight.index));
+		bounds.update(tree.getV(vertexBottomRight.index));
+		bounds.update(tree.getV(vertexBottom.index));
+		bounds.update(tree.getV(vertexBottomLeft.index));
+		bounds.update(tree.getV(vertexLeft.index));
+		bounds.update(tree.getV(vertexCenter.index));
 
 		if (!isLeaf())
 			addChildren();
+		
 
 		// By updating neighbors recursively from root we ensure that all nodes
 		// already exist.
@@ -68,8 +77,8 @@ public class QuadNode {
 	}
 
 	public void split() {
-		// if (tree.CULLING_ENABLED && !isInView())
-		// return;
+		if (tree.CULLING_ENABLED && !isInView())
+			return;
 
 		if (parent != null && !parent.isSplit)
 			parent.split();
@@ -93,7 +102,14 @@ public class QuadNode {
 		}
 	}
 
+	private boolean isInView() {
+		return bounds.isInView();
+	}
+
 	public void setDepth(int d) {
+		if (tree.CULLING_ENABLED && !isInView())
+			return;
+
 		if (depth > d)
 			return;
 
@@ -266,7 +282,12 @@ public class QuadNode {
 				vertexLeft.index, this, tree);
 		childBottomRight = new QuadNode(NodeType.BOTTOM_RIGHT, d, s,
 				vertexCenter.index, this, tree);
-
+		
+		bounds.update(childTopLeft.bounds);
+		bounds.update(childTopRight.bounds);
+		bounds.update(childBottomLeft.bounds);
+		bounds.update(childBottomRight.bounds);
+		
 		hasChildren = true;
 	}
 
@@ -333,8 +354,8 @@ public class QuadNode {
 	}
 
 	void setActiveVertices() {
-		// if (tree.CULLING_ENABLED && !isInView())
-		// return;
+		if (tree.CULLING_ENABLED && !isInView())
+			return;
 
 		if (isSplit && hasChildren) {
 			childTopLeft.setActiveVertices();
