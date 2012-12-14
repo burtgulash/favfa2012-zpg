@@ -18,13 +18,11 @@ import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 public class Main {
 	private static final float METRES_PER_FLOAT = 2f;
-	// TODO speed = 3f
-	private static final float MOVEMENT_SPEED = 10f / METRES_PER_FLOAT;
+	private static final float MOVEMENT_SPEED = 3 / METRES_PER_FLOAT;
 	private static final float CAM_HEIGHT = 1.85f / METRES_PER_FLOAT;
 	private static final double DAY_LENGTH = 2 * 60;
-	// TODO
 
-	private static final int V_SYNC = 60*6;
+	private static final int V_SYNC = 60;
 
 	private static final float SUN_DISTANCE = 500f;
 
@@ -52,6 +50,7 @@ public class Main {
 	private static double day_time = 0f;
 	private static final float AMB_INT = .1f;
 	private static final float GRAVITY = 20f;
+	private static final float ATTENUATION = .8f;
 
 	// main
 	public static void main(String[] args) {
@@ -197,7 +196,7 @@ public class Main {
 			if (newV.lengthSquared() > .001f)
 				velocity = newV;
 			else
-				velocity.scale(.99f); // Friction
+				velocity.scale(ATTENUATION); // Friction
 
 			if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
 				inAir = true;

@@ -1,10 +1,9 @@
 import org.lwjgl.util.vector.Vector3f;
 
 public class Bounds {
-	// TODO private
-	float xlo, xhi;
-	float ylo, yhi;
-	float zlo, zhi;
+	private float xlo, xhi;
+	private float ylo, yhi;
+	private float zlo, zhi;
 	
 	public Bounds(Vector3f v) {
 		xlo = xhi = v.x;

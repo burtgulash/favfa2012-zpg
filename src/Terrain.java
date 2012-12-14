@@ -28,14 +28,15 @@ public class Terrain {
 	private int index_count;
 	private int vHandle, nHandle, iHandle, tHandle;
 
+	private final int SUBDIVISION_LVL = 4;
+	public final boolean CULLING_ENABLED = true;
+	public final int MIN_DEPTH = 6;
+	public final int MAX_DEPTH = 12;
+	
 	private final float TEXTURE_MAGNIFICATION = 6f;
 	private final float METRES_PER_FLOAT = 2f;
-	private final int SUBDIVISION_LVL = 4;
 	private final int SIZEOF_FLOAT = 4;
 	public final int ROOT_DEPTH = 1;
-	public final int MIN_DEPTH = 7;
-	public final int MAX_DEPTH = 12;
-	public final boolean CULLING_ENABLED = true;
 
 	public Terrain(File file, int w, int h) throws IOException {
 		width = w;
@@ -105,8 +106,9 @@ public class Terrain {
 		float dx = (getY(x + delta, z) - getY(x - delta, z)) / (2 * delta);
 		float dz = (getY(x, z + delta) - getY(x, z - delta)) / (2 * delta);
 
-		Vector3f normal = Vector3f.cross(new Vector3f(0, dz, 1), new Vector3f(
-				1, dx, 0), null);
+//		same
+//		Vector3f normal = Vector3f.cross(new Vector3f(0, dz, 1), new Vector3f( 1, dx, 0), null);
+		Vector3f normal = new Vector3f(-dx, 1, -dz);
 		normal.normalise();
 
 		tbuf.put(x / TEXTURE_MAGNIFICATION).put(z / TEXTURE_MAGNIFICATION);
