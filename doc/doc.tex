@@ -83,6 +83,14 @@ Výsledek je součet těchto dvou lineárních interpolací, od kterých je ode�
 K &= I + J - bilinearInterpolate(A, B, C, D, u, v) \\
 \end{align*}
 
+\begin{figure}[ht!]
+\centering
+	\includegraphics[width=8cm]{coons.pdf}
+	\caption{Bilinearly blended patch mezi čtyřmi kontrolními křivkami.}
+\end{figure}
+
+\clearpage
+
 \subsection{Vyhlazování}
 Pro vykreslování je terén uložen do vertex bufferu na grafické kartě. Na
 základě úrovně rozdělení je terén opakovaně rozčtvrcen použitím definované
@@ -120,9 +128,22 @@ Quadtree je stromová struktura, jejíž kořenový uzel představuje celý ter�
 jeden čtyřúhelník. Potomci tohoto a každého dalšího uzlu jsou čtyři čtvrtiny
 tohoto čtyřúhelníka, respektive čtyřúhelníka, který daný uzel představuje.
 
-Při vykreslování každého snímku je tento strom rozložen (split) do požadované hloubky a na konci opět složen (merge) zpátky. Obě operace jsou rekurzivní, jedna úroveň rozložení vypadá takto:
+Při vykreslování každého snímku je tento strom rozložen do požadované
+hloubky a na konci opět složen zpátky. Obě operace jsou rekurzivní,
+jedna úroveň vytvoření potomků vypadá takto:
 
-% todo figure split
+
+\begin{figure}[ht!]
+\centering
+	\includegraphics[width=10cm]{subd.pdf}
+	\caption{Vytvoření potomků uzlu.}
+\end{figure}
+
+\begin{figure}[ht!]
+\centering
+	\includegraphics[width=10cm]{split.pdf}
+	\caption{Rozložení uzlu a korekce u sousedních uzlů.}
+\end{figure}
 Složení je pak pouze opačná operace.
 
 Popis a implementace Quadtree pro adaptivní vyhlazování je delailněji a lépe popsán v několika publikacích a článcích. % TODO cite quadtree
