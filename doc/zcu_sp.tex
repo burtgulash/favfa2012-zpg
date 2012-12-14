@@ -1,0 +1,76 @@
+\documentclass{zcu_sp}
+\usepackage[cp1250]{inputenc}
+
+\title{Krajinka v zimním hávu}
+\course{KIV/ZPG}
+\author{Mike Wazowski M00I65535}
+\email{wazowski@monsters.inc}
+
+\begin{document}
+\maketitle
+
+\section{Pohyb po terénu}
+Popsat a pøípadnì graficky znázornit, jakım zpùsobem zjišujete, jak vysoko má bıt kamera nad terénem a jak je zajištìna plynulost pohybu. Mùete zahrnout i další 
+vychytávky, jako kıvání pøi chùzi, atp. Ne se však pustíte do specialit, odlaïte základ!
+
+\section{Pøehled implementovanıch variací}
+Sepište všechny implementované efekty dle kategorií, které jsou uvedeny na~stránkách pøedmìtu \cite{zpg12}. Efekty, které nepopíšete v dokumentaci nebudou zapoèítány do hodnocení.
+
+\subsection{Ukázka efektu}
+Pokud v latexu potøebujete obrázky (obr. \ref{fig:schockedmike}), lze je vkládat pomocí pár øádek:
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=3cm]{obrazek.jpg}
+\caption{Šokovanı Mike}
+\label{fig:schockedmike}
+\end{figure}
+
+Pokud pouíváte pdflatex, mùe bıt obrázek ve formátech pdf, jpg, png, pokud pouíváte latex, musí bıt ve formátu eps.
+
+Dùleité vìci je moné \emph{zvıraznit}.
+
+Pøi popisu nìkterıch efektù 
+\begin{itemize}
+\item se
+\item vám 
+\item moná
+\item hodí
+\item vıèet.
+\end{itemize}
+
+Není problém uvádìt èásti shaderu (kód \ref{lst:singlecolor}) (nadefinován je i jazyk GLSL). Pøípadní zájemci si mohou nadefinovat svùj oblíbenı stínovací jazyk podle návodu \cite{hei07}.
+
+\lstset{language=glsl}
+\begin{lstlisting}[caption={Shader vrátí barvu definovanou v aplikaci pomocí promìnné \lstinline{uniform vec3 Color}},label={lst:singlecolor}]
+uniform vec3 Color;
+
+void main(void)
+{
+    gl_FragColor = vec4(Color, 1.0);
+}
+\end{lstlisting}
+
+
+\section{Popis ovládání}
+Napište jednoduchou uivatelskou pøíruèku k vaší aplikaci. To platí zejména v~pøípadì nestandardního ovládání (klávesové zkratky na zapnutí/vypnutí efektù, \dots).
+
+\section{Závìr}
+Zhodnote dosaené vısledky, plusy a zápory vaší semestrální práce a pøípadné moné smìry vylepšení.
+
+\begin{thebibliography}{MMM00}
+% Literatura: na jednotlive polozky se lze odkazovat pomoci \cite{nazev polozky}
+\bibitem[ZPG12]{zpg12} 
+	SKALA Václav a kol. 
+	{\em ZPG - Základy poèítaèové grafiky 2012/2013} [online].
+	2012 [cit.~9.2012].
+	http://herakles.zcu.cz/education/zpg
+\bibitem[HEI07]{hei07} 
+	HEINZ, Carsten -- MOSES, Brooks. 
+	{\em The Listings Package} [online]. 
+	2007 [cit.~9.2009]. \\
+	ftp://ftp.tex.ac.uk/tex-archive/macros/latex/contrib/listings/listings.pdf
+
+\end{thebibliography}
+
+\end{document}

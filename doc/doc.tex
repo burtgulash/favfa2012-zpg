@@ -1,7 +1,6 @@
-\documentclass[11pt]{article}
+\documentclass{zcu_sp}
 \usepackage[utf8]{inputenc}
 \usepackage[czech]{babel}
-\usepackage{a4wide}
 \usepackage{amsmath}
 \usepackage{graphicx}
 
@@ -9,9 +8,11 @@
 
 
 
-\title{Základy Počítačové grafiky}
+\title{Pohoda na Sahaře}
+\course{KIV/ZPG}
 \author{Tomáš Maršálek}
-\date{27.\,října 2012}
+\email{marsalet@students.zcu.cz}
+\date{14.\,prosince 2012}
 
 
 
@@ -21,6 +22,38 @@
 Pro semestrální práci jsem po osobní dohodě se cvičícím zvolil jazyk Java, poté
 podle vlastního výběru jeden z nejpoužívanějších wrapperů OpenGL pro Javu -
 \textbf {Lightweight Java Game Library (LWJGL)}.
+
+\section{Pohyb po terénu}
+\subsection{Rychlostní vektor}
+Požadavkem je, aby rychlost pohybu hráče po terénu byla konstantní ve všech
+směrech. Postup, který je zde použit nejprve vytvoří rychlostní vektor v rovině
+xz, které zjistí ze stisknutých kláves WSAD. Současná pozice s tímto vektorem
+udává novou pozici. Nad ní je doplněna výšková souřadnice a rychlostní vektor
+je normalizován. Problém, který nastane, je ten, že po normalizaci vznikla
+chyba ve výškové složce rychlostního vektoru. Proto je souřadnice y vypočítána
+znovu a vektor opět normalizován. Tento postup je iterován, dokud není dosaženo
+přijatelné chyby. Tato metoda obecně nekonverguje, proto je počet iterací
+omezen konečnou hodnotou.
+
+\subsection{Fyzika}
+Jsou implementována dvě rozšíření nad standardním pohybem. Jedním z nich je implementace setrvačnosti po zvednutí pohybových kláves. V každém snímku je pouze rychlostní vektor přenásoben útlumovou konstantou $c, 0 < c < 1$.
+
+Druhým rozšířením je skok do výšky. Vektor rychlosti je ve finále počítán jako
+součet vektoru rychlosti vypočteném podle stisknutých pohybových kláves,
+vektoru skoku a vektoru představujícího gravitaci.
+\begin{align*}
+\mathbf{v} = \mathbf{velocity}+ \mathbf{jump} - gravityConstant \cdot t \\
+\end{align*}
+
+Po získání vektoru rychlosti získáme pozici hráče v novém snímku ze vztahu
+$\mathbf{s} = \mathbf{v} \cdot t$
+Čas $t$ je zde časový rozdíl mezi snímky.
+
+\subsection{Detekce kolizí}
+Kolize s terénem jsou vypočteny jednoduše jako 
+\begin{align*}
+y &:= max(y, getY(x, z))
+\end{align*}
 
 
 \section{Terén}
@@ -57,12 +90,13 @@ derivací. Pro dosažení vyhlazeného povrchu se nejčastěji používá bikubi
 bilineární interpolace mezi kubickými křivkami mezi řídícími vrcholy. Zde byla
 zvolena bilineárně namíchaná interpolace (bilinearly blended patch) mezi
 Catmull-Rom spline křivkami. Použití bikubické interpolace namísto bilineární
-nepřináší více hladkosti. Více záleží na kontrolních křivkách.
+nepřináší znatelně více hladkosti, více záleží na kontrolních křivkách.
 
 Catmull-Rom spline je hladká interpolační křivka mezi n body, která je často
 používána pro svou jednoduchost. Pro výpočet používá Hermittovu formu kubické spline křivky, kde parametry derivace jsou zvoleny pro sousední body shodné, aby došlo právě ke kýžené hladkosti.
 
-Lepším řešením by bylo použití b-spline křivky, která dosahuje spojité i druhé derivace.
+Lepším řešením by bylo použití b-spline křivky, která dosahuje spojité i druhé
+derivace, za cenu složitějšího výpočtu.
 
 Bilinearly blended patch je metoda pro získání bodu, který se nachází na povrchu ohraničeném čtyřmi libovolnými křivkami.
 Nejprve jsou spočteny body na kontrolních křivkách dle parametrů u a v. 
@@ -89,28 +123,12 @@ K &= I + J - bilinearInterpolate(A, B, C, D, u, v) \\
 	\caption{Bilinearly blended patch mezi čtyřmi kontrolními křivkami.}
 \end{figure}
 
-\clearpage
 
 \subsection{Vyhlazování}
 Pro vykreslování je terén uložen do vertex bufferu na grafické kartě. Na
-základě úrovně rozdělení je terén opakovaně rozčtvrcen použitím definované
-interpolující funkce.
+základě úrovně rozdělení je terén opakovaně rozčtvrcen a nově vzniklé body
+určené podle zvolené interpolující funkce.
 
-\subsection{Výpočet normály}
-Při ukládání vrcholů do vertex bufferu jsou zároveň spočteny normály pro každý
-bod. Metoda spočívá ve výpočtu gradientu takové funkce, že terén, tedy $getY(x,
-z)$, je jednou z jejích vrstevnic. Pro vektor gradientu platí, že je vždy kolmý
-na vrstevnici své křivky, což je přesně to, co potřebujeme pro normálu.
-
-Funkce, kterou hledáme je $f(x, y, z) = getY(x, z) - y$, protože $c = getY(x,
-z) - y$ je obecný předpis pro vrstevnici $f$ a pro $c = 0$ dostáváme náš terén. 
-Gradient této funkce je jednoduše
-\begin{align*}
-\nabla f = \left[ \frac{\partial getY}{\partial x}, -1, \frac{\partial getY}{\partial z} \right]^T
-\end{align*}
-
-Derivaci samozřejmě spočteme numericky, například pomocí obousměrné diference.
-Gradient normalizujeme a máme jednotkový vektor normály pro daný bod.
 
 \subsection{Adaptivní vyhlazování}
 Terén, který je zadán jako výšková mapa velikosti $128\times128$, je po
@@ -141,12 +159,28 @@ jedna úroveň vytvoření potomků vypadá takto:
 
 \begin{figure}[ht!]
 \centering
-	\includegraphics[width=10cm]{split.pdf}
+	\includegraphics[width=8cm]{split.pdf}
 	\caption{Rozložení uzlu a korekce u sousedních uzlů.}
 \end{figure}
 Složení je pak pouze opačná operace.
 
 Popis a implementace Quadtree pro adaptivní vyhlazování je delailněji a lépe popsán v několika publikacích a článcích. % TODO cite quadtree
+
+\subsection{Výpočet normály}
+Při ukládání vrcholů do vertex bufferu jsou zároveň spočteny normály pro každý
+bod. Metoda spočívá ve výpočtu gradientu takové funkce, že terén, tedy $getY(x,
+z)$, je jednou z jejích vrstevnic. Pro vektor gradientu platí, že je vždy kolmý
+na vrstevnici své křivky, což je přesně to, co potřebujeme pro normálu.
+
+Funkce, kterou hledáme je $f(x, y, z) = getY(x, z) - y$, protože $c = getY(x,
+z) - y$ je obecný předpis pro vrstevnici $f$ a pro $c = 0$ dostáváme náš terén. 
+Gradient této funkce je jednoduše
+\begin{align*}
+\nabla f = \left[ \frac{\partial getY}{\partial x}, -1, \frac{\partial getY}{\partial z} \right]^T
+\end{align*}
+
+Derivaci samozřejmě spočteme numericky, například pomocí obousměrné diference.
+Gradient normalizujeme a máme jednotkový vektor normály pro daný bod.
 
 
 \section{Pohledové ořezávání}
@@ -189,37 +223,7 @@ Poslední rovnice představuje rovnici první roviny pohledové pyramidy. Stejn�
 
 
 
-\section{Dynamika hráče}
-\subsection{Rychlostní vektor}
-Požadavkem je, aby rychlost pohybu hráče po terénu byla konstantní ve všech
-směrech. Postup, který je zde použit nejprve vytvoří rychlostní vektor v rovině
-xz, které zjistí ze stisknutých kláves WSAD. Současná pozice s tímto vektorem
-udává novou pozici. Nad ní je doplněna výšková souřadnice a rychlostní vektor
-je normalizován. Problém, který nastane, je ten, že po normalizaci vznikla
-chyba ve výškové složce rychlostního vektoru. Proto je souřadnice y vypočítána
-znovu a vektor opět normalizován. Tento postup je iterován, dokud není dosaženo
-přijatelné chyby. Tato metoda obecně nekonverguje, proto je počet iterací
-omezen konečnou hodnotou.
 
-\subsection{Fyzika}
-Jsou implementována dvě rozšíření nad standardním pohybem. Jedním z nich je implementace setrvačnosti po zvednutí pohybových kláves. V každém snímku je pouze rychlostní vektor přenásoben útlumovou konstantou $c, 0 < c < 1$.
-
-Druhým rozšířením je skok do výšky. Vektor rychlosti je ve finále počítán jako
-součet vektoru rychlosti vypočteném podle stisknutých pohybových kláves,
-vektoru skoku a vektoru představujícího gravitaci.
-\begin{align*}
-\mathbf{v} = \mathbf{velocity}+ \mathbf{jump} - gravityConstant \cdot t \\
-\end{align*}
-
-Po získání vektoru rychlosti získáme pozici hráče v novém snímku ze vztahu
-$\mathbf{s} = \mathbf{v} \cdot t$
-Čas $t$ je zde časový rozdíl mezi snímky.
-
-\subsection{Detekce kolizí}
-Kolize s terénem jsou vypočteny jednoduše jako 
-\begin{align*}
-y &:= max(y, getY(x, z))
-\end{align*}
 
 
 
@@ -239,6 +243,21 @@ Získaná intenzita se používá přímo jako intenzita hlavního zdroje světl
 Scénu navíc osvětluje globální ambientní iluminace a dvě světla umístěná nad
 dvěma protilehlými rohy terénu, která vrhají realistický stín i v "noci".
 
+\section{Přehled implementovaných variací}
+\begin{itemize}
+	\item grafický vzhled a efekty
+	\begin{itemize}
+		\item pohledové ořezávání pyramidou
+		\item hladký terén
+		\item adaptivní zjemňování terénu
+	\end{itemize}
+
+	\item avatar, uživatelské rozhranní a pomoc hráči
+	\begin{itemize}
+		\item dynamika avatara (hráče)
+	\end{itemize}
+\end{itemize}
+
 \section{Přeložení a spuštění}
 \section{Ovládání hry}
 Kamerou pohneme standardně klávesami WSAD a otočíme pohybem myši. Skok je
@@ -246,8 +265,17 @@ pomocí mezerníku.Invertování vertikálního pohledu provedeme pomocí kláve
 přepnutí mezi drátěným a plným modelem pomocí klávesy C. Hru ukončíme stiskem
 klávesy ESC.
 
+\section{Závěr}
+Výsledkem je spíše jednoduchý základ pro hru, než hra samotná. Zaměřil jsem se
+především na výpočetně orientované variace úlohy. I přesto, že se jedná o pouhý
+terén a pohyb po něm, jedním jednoduchým vylepšením scény by bylo otexturování
+terénu na základě například výšky nebo sklonu v daném bodě.
 
-\begin{thebibliography}{3}
+Dále jsem chtěl implementovat vyhlazování pomocí kubické b-spline křivky a
+porovnat s hotovou Catmull-Rom křivkou. 
+
+
+\begin{thebibliography}{5}
 \bibitem[1]{rocks}
 {\em Bill Jacobs} \\
 {\bf OpenGL tutorial}
@@ -266,6 +294,36 @@ klávesy ESC.
 	(accessed October 27, 2012) \\
 \url{http://en.wikipedia.org/wiki/Triangle_strip}
 
+\bibitem[4]{wikicoons}
+{\em Wikipedia contributors} \\
+{\bf ``Coons surface,'' Wikipedia, The Free Encyclopedia} \\
+	(accessed 14 December 2012) \\
+\url{http://en.wikipedia.org/w/index.php?title=Coons_surface&oldid=486532739}
+
+\bibitem[5]{rygblogFrustum}
+{\em The ryg blog} \\
+{\bf Frustum planes from the projection matrix} \\
+\url{http://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/}
+
+\bibitem[6]{flipcodeFrustum}
+{\em Dion Picco - flipcode} \\
+{\bf Frustum Culling} \\
+\url{http://www.flipcode.com/archives/Frustum_Culling.shtml}
+
+\bibitem[7]{xna-large-terrain}
+{\em skytiger} \\
+{\bf XNA Large Terrain} \\
+\url{http://skytiger.wordpress.com/2010/11/28/xna-large-terrain/}
+
+\bibitem[8]{xna-terrain-tutorial}
+{\em Dustin Horne} \\
+{\bf XNA Terrain Tutorial} \\
+\url{http://www.dustinhorne.com/page/XNA-Terrain-Tutorial-Table-of-Contents.aspx}
+
+\bibitem[9]{rose-hulman}
+{\em David L. Finn} \\
+{\bf MA 323 Geometric Modelling \\ Course Notes: Day 31 \\ Blended and Ruled Surfaces Coons Patches} \\
+\url{http://www.rose-hulman.edu/~finn/CCLI/Notes/day31.pdf}
 
 \end{thebibliography}
 
