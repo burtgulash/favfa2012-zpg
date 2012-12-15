@@ -28,10 +28,10 @@ public class Terrain {
 	private int index_count;
 	private int vHandle, nHandle, iHandle, tHandle;
 
-	private final int SUBDIVISION_LVL = 4;
+	private final int SUBDIVISION_LVL = 3;
 	public final boolean CULLING_ENABLED = true;
-	public final int MIN_DEPTH = 6;
-	public final int MAX_DEPTH = 12;
+	public final int MIN_DEPTH = 5;
+	public final int MAX_DEPTH = 10;
 	
 	private final float TEXTURE_MAGNIFICATION = 6f;
 	private final float METRES_PER_FLOAT = 2f;
@@ -234,9 +234,9 @@ public class Terrain {
 				Vector3f point = getV(znode.position);
 				float dx = x - point.x;
 				float dz = z - point.z;
-				double distance = (dx * dx + dz * dz) / (width * width / 16);
+				double distance = Math.sqrt(dx * dx + dz * dz);
 
-				int maxDepth = depth(distance);
+				int maxDepth = depth(distance, 64);
 				znode.setDepth(maxDepth);
 
 				znode = znode.neighborBottom;
@@ -251,8 +251,8 @@ public class Terrain {
 		ibuf.flip();
 	}
 
-	private int depth(double x) {
-		return (int) (Math.max(MIN_DEPTH, MAX_DEPTH * (1 - x)));
+	private int depth(double x, double r) {
+		return (int) Math.max(MIN_DEPTH, ((MIN_DEPTH - MAX_DEPTH) / r) * x + MAX_DEPTH);
 	}
 
 	public void buildVBOs() {

@@ -18,7 +18,7 @@ import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 public class Main {
 	private static final float METRES_PER_FLOAT = 2f;
-	private static final float MOVEMENT_SPEED = 3 / METRES_PER_FLOAT;
+	private static final float MOVEMENT_SPEED = 30f / METRES_PER_FLOAT;
 	private static final float CAM_HEIGHT = 1.85f / METRES_PER_FLOAT;
 	private static final double DAY_LENGTH = 2 * 60;
 
@@ -191,7 +191,7 @@ public class Main {
 		float azimuth_rads = (float) Math.toRadians(azimuth);
 
 		if (!inAir) {
-			// TODO corner bug
+			cam.y = -(t.getY(-cam.x, -cam.z) + CAM_HEIGHT);
 			Vector3f newV = getVelocity(azimuth_rads, MOVEMENT_SPEED);
 			if (newV.lengthSquared() > .001f)
 				velocity = newV;
