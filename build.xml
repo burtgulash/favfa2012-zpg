@@ -2,20 +2,24 @@
 <project name="zpg" default="run" basedir=".">
 	<property name="jar.file" value="bin/ZPG_A10B0632P.jar" />
 	<path id="cp">
-		<fileset dir="lib/jars">
+		<fileset dir="bin/data/lib/jars">
 			<include name="*.jar"/>
 		</fileset>
 	</path>
 
-	<target name="compile" depends="clean">
+	<target name="compile" depends="makeBin">
+		<mkdir dir="bin" />
 		<javac srcdir="src" destdir="bin" includeantruntime="false">
 			<classpath refid="cp"/>
 		</javac>
-		<jar destfile="${jar.file}" basedir="bin">
+		<jar destfile="${jar.file}">
+			<fileset dir="bin">
+				<include name="*.class" />
+			</fileset>
 			<manifest>
 				<attribute name="Main-Class" value="Main" />
 				<attribute name="Class-Path" 
-		value=". ../lib/jars/lwjgl.jar ../lib/jars/lwjgl_util.jar" />
+		value=". data/lib/jars/lwjgl.jar data/lib/jars/lwjgl_util.jar" />
 			</manifest>
 		</jar>
 	</target>
@@ -25,17 +29,32 @@
 			<classpath refid="cp" />
 <!--
 			<sysproperty 
-				key="java.library.path" value="lib/natives"/>
+				key="java.library.path" value="data/lib/natives"/>
 -->
 		</java>
 	</target>
 
-	<target name="clean">
+	<target name="clean" if="binExists" depends="binExists">
 		<delete file="${jar.file}" />
 		<delete>
 			<fileset dir="bin">
 				<include name="*.class" />
 			</fileset>
 		</delete>
+	</target>
+
+	<target name="makeBin" depends="clean">
+		<mkdir dir="bin" />
+		<copy todir="bin">
+			<fileset dir=".">
+				<include name="data/**" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="binExists">
+		<condition property="binExists">
+			<available file="bin" type="dir" />
+		</condition>
 	</target>
 </project>
