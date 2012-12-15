@@ -31,7 +31,8 @@ public class Terrain {
 	private final int SUBDIVISION_LVL = 3;
 	public final boolean CULLING_ENABLED = true;
 	public final int MIN_DEPTH = 5;
-	public final int MAX_DEPTH = 10;
+	public int BASE_DEPTH;
+	public int MAX_DEPTH;
 	
 	private final float TEXTURE_MAGNIFICATION = 6f;
 	private final float METRES_PER_FLOAT = 2f;
@@ -52,11 +53,14 @@ public class Terrain {
 		rootNodeSize = scaleFactor * width;
 		root = new QuadNode(NodeType.ROOT, ROOT_DEPTH, rootNodeSize, 0, null,
 				this);
+		MAX_DEPTH = root.getMaxDepth();
+		BASE_DEPTH = MAX_DEPTH - SUBDIVISION_LVL + 1;
 
 		vbuf.flip();
 		nbuf.flip();
 		tbuf.flip();
 
+		buildVBOs();
 	}
 
 	public Vector3f getV(int i) {
@@ -218,7 +222,7 @@ public class Terrain {
 	}
 
 	public void update(float x, float z) {
-		System.out.printf("drawing %d vertices%n", index_count);
+//		System.out.printf("drawing %d vertices%n", index_count);
 		
 		index_count = 0;
 		ibuf.clear();
@@ -226,7 +230,7 @@ public class Terrain {
 		root.merge();
 		root.setDepth(MIN_DEPTH);
 
-		QuadNode xnode = root.nodeWithPointMaxDepth(0, 0, MIN_DEPTH);
+		QuadNode xnode = root.nodeWithPointMaxDepth(0, 0, BASE_DEPTH);
 		QuadNode znode;
 		while (xnode != null) {
 			znode = xnode;
@@ -236,7 +240,7 @@ public class Terrain {
 				float dz = z - point.z;
 				double distance = Math.sqrt(dx * dx + dz * dz);
 
-				int maxDepth = depth(distance, 64);
+				int maxDepth = depth(distance, 40);
 				znode.setDepth(maxDepth);
 
 				znode = znode.neighborBottom;
@@ -252,7 +256,7 @@ public class Terrain {
 	}
 
 	private int depth(double x, double r) {
-		return (int) Math.max(MIN_DEPTH, ((MIN_DEPTH - MAX_DEPTH) / r) * x + MAX_DEPTH);
+		return (int) Math.max(MIN_DEPTH, ((MIN_DEPTH - MAX_DEPTH) / r) * x + MAX_DEPTH + 1);
 	}
 
 	public void buildVBOs() {

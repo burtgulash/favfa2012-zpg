@@ -422,6 +422,12 @@ public class QuadNode {
 
 		return this;
 	}
+	
+	public int getMaxDepth() {
+		if (hasChildren)
+			return childTopLeft.getMaxDepth();
+		return depth;
+	}
 
 	public QuadNode deepestNodeWithPoint(float x, float z) {
 		return nodeWithPointMaxDepth(x, z, Integer.MAX_VALUE);

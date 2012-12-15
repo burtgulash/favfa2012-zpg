@@ -83,17 +83,18 @@ Nakonec proložíme přímku mezi těmito body, čímž podruhé použijeme line
 G &= linearInterpolate(E, F, v) \\
 \end{align*}
 
-\subsubsection{Bilinearly blended patch}
+\subsubsection{Bilinearly blended patch} 
 Pokud chceme nejen spojitou funkci, ale i spojitou derivaci, tzn. aby se na
 povrchu netvořily špičaté vrcholy, musíme použít funkci se spojitou první
 derivací. Pro dosažení vyhlazeného povrchu se nejčastěji používá bikubická nebo
 bilineární interpolace mezi kubickými křivkami mezi řídícími vrcholy. Zde byla
-zvolena bilineárně namíchaná interpolace (bilinearly blended patch) mezi
-Catmull-Rom spline křivkami. Použití bikubické interpolace namísto bilineární
-nepřináší znatelně více hladkosti, více záleží na kontrolních křivkách.
+zvolena bilineárně namíchaná interpolace (bilinearly blended
+patch)\cite{wikicoons}\cite{rose-hulman} mezi Catmull-Rom spline křivkami.
+Použití bikubické interpolace namísto bilineární nepřináší znatelně více
+hladkosti, více záleží na kontrolních křivkách.
 
 Catmull-Rom spline je hladká interpolační křivka mezi n body, která je často
-používána pro svou jednoduchost. Pro výpočet používá Hermittovu formu kubické spline křivky, kde parametry derivace jsou zvoleny pro sousední body shodné, aby došlo právě ke kýžené hladkosti.
+používána pro svou jednoduchost. Pro výpočet používá Hermitovu formu kubické spline křivky, kde parametry derivace jsou zvoleny pro sousední body shodné, aby došlo právě ke kýžené hladkosti.
 
 Lepším řešením by bylo použití b-spline křivky, která dosahuje spojité i druhé
 derivace, za cenu složitějšího výpočtu.
@@ -164,7 +165,8 @@ jedna úroveň vytvoření potomků vypadá takto:
 \end{figure}
 Složení je pak pouze opačná operace.
 
-Popis a implementace Quadtree pro adaptivní vyhlazování je delailněji a lépe popsán v několika publikacích a článcích. % TODO cite quadtree
+Popis a implementace Quadtree pro adaptivní vyhlazování je delailněji a lépe
+popsán v několika publikacích a článcích. \cite{xna-terrain-tutorial}
 
 \subsection{Výpočet normály}
 Při ukládání vrcholů do vertex bufferu jsou zároveň spočteny normály pro každý
@@ -259,20 +261,56 @@ dvěma protilehlými rohy terénu, která vrhají realistický stín i v "noci".
 \end{itemize}
 
 \section{Přeložení a spuštění}
+Aplikace byla vyvíjena pod GNU/Linux. Použitá verze Javy je 1.6.
+
+V kořenovém adresáři jsou dodatečně přiloženy spustitelné soubory vytvořené
+pomocí utility \textbf{jarsplice}, které obsahují všechny potřebné knihovny a
+nativní soubory.
+\begin{itemize}
+	\item \textbf{ZPG.exe} pro Windows
+	\item \textbf{ZPG.sh} pro Linux
+	\item \textbf{ZPG.jar} pro Windows i Linux, spuštění přes příkaz java -jar
+\end{itemize}
+
+\subsection{Z příkazové řádky}
+spuštění přiloženého archivu:
+\begin{verbatim}
+bin$  java -jar ZPG_A10B0632P.jar
+\end{verbatim}
+
+\subsection{Použitím Ant}
+Pokud je nainstalovaný Apache Ant, pak pro přeložení a spuštění stačí použít příkaz z adresáře obsahující skript \textit{build.xml}.
+\begin{verbatim}
+$  ant
+\end{verbatim}
+nebo 
+\begin{verbatim}
+$  ant run
+\end{verbatim}
+
+\subsection{V Eclipse}
+Získání a integrace \textbf {LWJGL} pod eclipse je popsána ve videu
+\cite{installtut}, ale není třeba. Práce je odevzdána přímo jako projekt
+Eclipse, tedy stačí v Eclipse importovat existující projekt. Při importu se
+však smaže adresář bin, je třeba ho nakopírovat zpátky, jinak chybí soubor s
+terénem v bin/data.
+
 \section{Ovládání hry}
 Kamerou pohneme standardně klávesami WSAD nebo šipkami a otočíme pohybem myši.
-Skok je pomocí mezerníku. Invertování vertikálního pohledu provedeme pomocí
-klávesy U a přepnutí mezi drátěným a plným modelem pomocí klávesy C. Hru
-ukončíme stiskem klávesy ESC.
+Skok je pomocí mezerníku, sprint pomocí levého shiftu. Invertování vertikálního
+pohledu provedeme pomocí klávesy U a přepnutí mezi drátěným a plným modelem
+pomocí klávesy C. Hru ukončíme stiskem klávesy ESC.
 
 \section{Závěr}
 Výsledkem je spíše jednoduchý základ pro hru, než hra samotná. Zaměřil jsem se
-především na výpočetně orientované variace úlohy. I přesto, že se jedná o pouhý
-terén a pohyb po něm, jedním jednoduchým vylepšením scény by bylo otexturování
-terénu na základě například výšky nebo sklonu v daném bodě.
+především na výpočetně orientované variace úlohy. Nejzajímavější část této
+práce je pohled v drátěném modelu, kdy jsou vidět přechody mezi jednotlivými
+úrovněmi detailu.
 
-Dále jsem chtěl implementovat vyhlazování pomocí kubické b-spline křivky a
-porovnat s hotovou Catmull-Rom křivkou. 
+I přesto, že se jedná o pouhý terén a pohyb po něm, jedním jednoduchým
+vylepšením scény by bylo otexturování terénu na základě například výšky nebo
+sklonu v daném bodě.  Dále jsem chtěl implementovat vyhlazování pomocí kubické
+b-spline křivky a porovnat s hotovou Catmull-Rom křivkou. 
 
 
 \begin{thebibliography}{5}

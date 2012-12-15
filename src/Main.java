@@ -18,7 +18,7 @@ import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 public class Main {
 	private static final float METRES_PER_FLOAT = 2f;
-	private static final float MOVEMENT_SPEED = 30f / METRES_PER_FLOAT;
+	private static final float MOVEMENT_SPEED = 3f / METRES_PER_FLOAT;
 	private static final float CAM_HEIGHT = 1.85f / METRES_PER_FLOAT;
 	private static final double DAY_LENGTH = 2 * 60;
 
@@ -51,6 +51,8 @@ public class Main {
 	private static final float AMB_INT = .1f;
 	private static final float GRAVITY = 20f;
 	private static final float ATTENUATION = .8f;
+	private static final float JUMP = 5f * MOVEMENT_SPEED;
+	private static final float SPRINT = 5f;
 
 	// main
 	public static void main(String[] args) {
@@ -65,36 +67,42 @@ public class Main {
 
 	private static void init() {
 		String dir = System.getProperty("user.dir");
-		System.setProperty("org.lwjgl.librarypath", dir + "/lib/natives");
+		String data_dir = dir + "/data";
+		try {
+			System.setProperty("org.lwjgl.librarypath", data_dir + "/lib/natives");
+		} catch (UnsatisfiedLinkError e) {
+			System.err.println("Can not load native library.");
+			System.exit(1);
+		}
 
 		try {
 			Display.setDisplayMode(new DisplayMode(800, 600));
-			Display.setTitle("ZPG 2012 - Tomas Marsalek (A10B0632P)");
+			Display.setTitle("Pohoda na Sahare - Tomas Marsalek (A10B0632P) 2012");
 			Display.create();
 		} catch (LWJGLException e) {
 			System.exit(2);
+		} catch (UnsatisfiedLinkError e) {
+			System.err.println("Can not load native library.");
+			System.exit(1);
 		}
 
 		width = height = 128;
 		try {
-			t = new Terrain(new File(dir + "/mapa128x128.raw"), width, height);
+			t = new Terrain(new File(data_dir + "/mapa128x128.raw"), width, height);
 		} catch (FileNotFoundException e) {
 			System.err.println("File not found");
-			System.exit(1);
+			System.exit(3);
 		} catch (IOException e) {
 			System.err.println("Can not load terrain.");
-			System.exit(1);
+			System.exit(3);
 		}
 
 		try {
-			// t.loadTexture(dir + "/rough_terrain_texture_24-512x512.png");
-			t.loadTexture(dir + "/sand.png");
+			t.loadTexture(data_dir + "/sand.png");
 		} catch (IOException e) {
-			System.out.println("texture");
-			System.exit(1);
+			System.err.println("Can not load texture.");
+//			System.exit(1);
 		}
-
-		t.buildVBOs();
 
 		lastFrameTime = getTime();
 
@@ -142,13 +150,13 @@ public class Main {
 		glTranslatef(cam.x, cam.y, cam.z);
 
 		// Ambient light
-		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT,
+		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT * 1.1f,
 				AMB_INT, AMB_INT, 1f }));
 		glLight(GL_LIGHT1, GL_POSITION, asFloatBuffer(new float[] { width,
 				SUN_DISTANCE, height, 1f }));
 
-		glLight(GL_LIGHT2, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT,
-				AMB_INT, AMB_INT, 1f }));
+		glLight(GL_LIGHT2, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT * 1.1f,
+				AMB_INT * 1.1f, AMB_INT, 1f }));
 		glLight(GL_LIGHT2, GL_POSITION, asFloatBuffer(new float[] { 0,
 				SUN_DISTANCE, height, 1f }));
 
@@ -166,16 +174,16 @@ public class Main {
 		glEnable(GL_LIGHTING);
 		glDisable(GL_POINT_SMOOTH);
 
-		// sun
 		float ri = (1 - AMB_INT) * si;
 		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[] { ri, ri,
-				.98f * ri, 1f }));
-		glLight(GL_LIGHT0, GL_AMBIENT, asFloatBuffer(new float[] { ri * .05f,
-				ri * .05f, ri * .07f, 1f }));
+				.97f * ri, 1f }));
+		glLight(GL_LIGHT0, GL_AMBIENT, asFloatBuffer(new float[] { ri * .1f,
+				ri * .07f, ri * .05f, 1f }));
 		glLight(GL_LIGHT0, GL_POSITION, asFloatBuffer(new float[] { 0f,
 				SUN_DISTANCE, 0f, 1f }));
 		glPopMatrix();
 
+		
 		// Render terrain
 		getClip();
 		glColor3f(1, 1, 1);
@@ -183,16 +191,22 @@ public class Main {
 		t.draw(-cam.x, -cam.z);
 		glDisable(GL_TEXTURE_2D);
 
+		
+		
+		
 		// MOVEMENT
 		int delta = getTimeDelta();
 		float time = (float) delta / 1000f;
-		// float speed = (float) delta * MOVEMENT_SPEED / 1000f;
 
 		float azimuth_rads = (float) Math.toRadians(azimuth);
+		
+		float movement_speed = MOVEMENT_SPEED;
+		if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT))
+			movement_speed *= SPRINT;
 
 		if (!inAir) {
 			cam.y = -(t.getY(-cam.x, -cam.z) + CAM_HEIGHT);
-			Vector3f newV = getVelocity(azimuth_rads, MOVEMENT_SPEED);
+			Vector3f newV = getVelocity(azimuth_rads, movement_speed);
 			if (newV.lengthSquared() > .001f)
 				velocity = newV;
 			else
@@ -200,7 +214,7 @@ public class Main {
 
 			if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
 				inAir = true;
-				velocity.y += -MOVEMENT_SPEED * 5;
+				velocity.y += -JUMP;
 			}
 		}
 
@@ -249,7 +263,7 @@ public class Main {
 		handleWireframeMode();
 		handleVerticalInvert();
 
-		printFPS(delta);
+//		printFPS(delta);
 
 		Display.update();
 		Display.sync(V_SYNC);
@@ -409,9 +423,7 @@ public class Main {
 
 	private static void printFPS(int timeDelta) {
 		int fps = (int) (1000f / (float) timeDelta);
-		// if (fps > 50)
-		// return;
-		System.out.print(fps + " ");
+		System.out.print("FPS: " + fps + " ");
 		for (int q = 0; q < fps / 4; q++)
 			System.out.print("#");
 		System.out.println();
