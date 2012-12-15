@@ -12,7 +12,7 @@
 \course{KIV/ZPG}
 \author{Tomáš Maršálek}
 \email{marsalet@students.zcu.cz}
-\date{14.\,prosince 2012}
+\date{15.\,prosince 2012}
 
 
 
@@ -26,8 +26,8 @@ podle vlastního výběru jeden z nejpoužívanějších wrapperů OpenGL pro Ja
 \section{Pohyb po terénu}
 \subsection{Rychlostní vektor}
 Požadavkem je, aby rychlost pohybu hráče po terénu byla konstantní ve všech
-směrech. Postup, který je zde použit nejprve vytvoří rychlostní vektor v rovině
-xz, které zjistí ze stisknutých kláves WSAD. Současná pozice s tímto vektorem
+směrech. Postup, který je zde použit, nejprve vytvoří rychlostní vektor v rovině
+xz, který zjistí ze stisknutých kláves WSAD. Současná pozice s tímto vektorem
 udává novou pozici. Nad ní je doplněna výšková souřadnice a rychlostní vektor
 je normalizován. Problém, který nastane, je ten, že po normalizaci vznikla
 chyba ve výškové složce rychlostního vektoru. Proto je souřadnice y vypočítána
@@ -36,7 +36,9 @@ přijatelné chyby. Tato metoda obecně nekonverguje, proto je počet iterací
 omezen konečnou hodnotou.
 
 \subsection{Fyzika}
-Jsou implementována dvě rozšíření nad standardním pohybem. Jedním z nich je implementace setrvačnosti po zvednutí pohybových kláves. V každém snímku je pouze rychlostní vektor přenásoben útlumovou konstantou $c, 0 < c < 1$.
+Jsou implementována tři rozšíření nad standardním pohybem. Jedním z nich je
+implementace setrvačnosti po zvednutí pohybových kláves. V každém snímku je
+pouze rychlostní vektor přenásoben útlumovou konstantou $c, 0 < c < 1$.
 
 Druhým rozšířením je skok do výšky. Vektor rychlosti je ve finále počítán jako
 součet vektoru rychlosti vypočteném podle stisknutých pohybových kláves,
@@ -49,18 +51,21 @@ Po získání vektoru rychlosti získáme pozici hráče v novém snímku ze vzt
 $\mathbf{s} = \mathbf{v} \cdot t$
 Čas $t$ je zde časový rozdíl mezi snímky.
 
+Třetím je sprint, kdy je pouze rychlostní konstanta zvětšena na trojnásobek.
+
 \subsection{Detekce kolizí}
 Kolize s terénem jsou vypočteny jednoduše jako 
 \begin{align*}
 y &:= max(y, getY(x, z))
 \end{align*}
+Kde $getY(x, z)$ je funkce udávající y souřadnici. Popsána níže.
 
 
 \section{Terén}
 Terén je načten z raw souboru, který reprezentuje výškovou mapu pro každý z
 bodů roviny xz. Tyto řídící body jsou uloženy do dvourozměrného pole bodů $h$.
 Terén je pak v programu reprezentován funkcí $getY(x, z) = y$, která používá
-body výškové mapy a interpoluje ty body, které leží mezi řídícími.V
+body výškové mapy a interpoluje ty body, které leží mezi řídícími.
 
 \subsection{getY}
 Pro funkci getY můžeme použít nespojitou funkci \uv{schody}. Tj. $getY(x, z) =
@@ -68,7 +73,7 @@ h (\lfloor x \rfloor, \lfloor z \rfloor)$.
 
 \subsubsection{Bilineární interpolace}
 Lepší řešení poskytuje použití spojité interpolace. Protože se jedná o
-interpolaci ve dvou rozměrech, uvažujeme interpolaci bilineární.
+interpolaci ve dvou rozměrech, můžeme uvažovat bilineární interpolaci.
 
 Její princip spočívá ve dvojité lineární interpolaci mezi čtyřmi body A, B, C,
 D, když máme zadány interpolační koeficienty $u$ a $v$ pro každý ze dvou
@@ -86,21 +91,24 @@ G &= linearInterpolate(E, F, v) \\
 \subsubsection{Bilinearly blended patch} 
 Pokud chceme nejen spojitou funkci, ale i spojitou derivaci, tzn. aby se na
 povrchu netvořily špičaté vrcholy, musíme použít funkci se spojitou první
-derivací. Pro dosažení vyhlazeného povrchu se nejčastěji používá bikubická nebo
-bilineární interpolace mezi kubickými křivkami mezi řídícími vrcholy. Zde byla
-zvolena bilineárně namíchaná interpolace (bilinearly blended
-patch)\cite{wikicoons}\cite{rose-hulman} mezi Catmull-Rom spline křivkami.
-Použití bikubické interpolace namísto bilineární nepřináší znatelně více
-hladkosti, více záleží na kontrolních křivkách.
+derivací. Pro dosažení vyhlazeného povrchu se nejčastěji používá bikubicky nebo
+bileneárně namíchaná plocha (coons surface)\cite{wikicoons}\cite{rose-hulman}
+mezi kubickými křivkami definovanými řídícími body.  Zde byla zvolena
+bilineárně namíchaná interpolace (bilinearly blended patch) mezi Catmull-Rom
+spline křivkami.  Použití bikubické interpolace namísto bilineární nepřináší
+znatelně více hladkosti, více záleží na kontrolních křivkách.
 
 Catmull-Rom spline je hladká interpolační křivka mezi n body, která je často
-používána pro svou jednoduchost. Pro výpočet používá Hermitovu formu kubické spline křivky, kde parametry derivace jsou zvoleny pro sousední body shodné, aby došlo právě ke kýžené hladkosti.
+používána pro svou jednoduchost. Pro výpočet používá Hermitovu formu kubické
+spline křivky, kde parametry derivace jsou zvoleny pro sousední body shodné,
+aby došlo právě ke kýžené hladkosti v interpolačních bodech.
 
 Lepším řešením by bylo použití b-spline křivky, která dosahuje spojité i druhé
 derivace, za cenu složitějšího výpočtu.
 
-Bilinearly blended patch je metoda pro získání bodu, který se nachází na povrchu ohraničeném čtyřmi libovolnými křivkami.
-Nejprve jsou spočteny body na kontrolních křivkách dle parametrů u a v. 
+Bilineárně namíchaný povrch je metoda pro získání bodu, který se nachází na
+povrchu ohraničeném čtyřmi libovolnými křivkami.  Nejprve jsou spočteny body na
+kontrolních křivkách dle parametrů u a v. 
 \begin{align*}
 E &= spline(A, B, u) \\
 F &= spline(C, D, u) \\
@@ -134,9 +142,9 @@ určené podle zvolené interpolující funkce.
 \subsection{Adaptivní vyhlazování}
 Terén, který je zadán jako výšková mapa velikosti $128\times128$, je po
 zjemnění úrovně 3 velký $1024\times1024$. Vykreslování takto detailního terénu
-je výpočetně zbytečně složité, proto se úroveň vyhlazování (LOD - Level of
-Detail) určujeme na základě vzdálenosti od pozorovatele. Čím blíže, tím
-očekáváme detailnější terén a naopak. 
+je výpočetně složité, proto úroveň vyhlazování (LOD - Level of Detail) určujeme
+na základě vzdálenosti od pozorovatele. Čím blíže, tím očekáváme detailnější
+terén a naopak. 
 
 \subsection{Quadtree}
 Datová struktura, ve které je uložená reprezentace vyhlazeného povrchu je
@@ -186,7 +194,9 @@ Gradient normalizujeme a máme jednotkový vektor normály pro daný bod.
 
 
 \section{Pohledové ořezávání}
-Počet trojúhelníků, které budeme chtít vykreslit nebo vyhladit pomocí quadtree, můžeme výrazně omezit tak, že vynecháme všechny uzly, které se ve výsledném snímku vůbec nezobrazí.
+Počet trojúhelníků, které budeme chtít vykreslit nebo vyhladit pomocí quadtree,
+můžeme výrazně omezit tak, že vynecháme všechny uzly, které se ve výsledném
+snímku vůbec nezobrazí.
 
 Provedeme vlastně clipping, tedy oříznutí elementů mimo snímek, stejně jako ho
 za nás provede OpenGL ve výsledném snímku. Abychom mohli tuto proceduru
@@ -214,18 +224,16 @@ x, y, z, w \right]^T$ nachází uvnitř pohledové pyramidy, či nikoliv. Bod uv
 -w \leq & z \leq w \\
 \end{align*}
 
-Protože ale $w$ je reprezentován posledním řádkem $pm_4^T \mathbf{b}$ a $x$ je $pm_1^T \mathbf{b}$, přepíšeme první nerovnici:
+Protože ale $w$ je reprezentován posledním řádkem $pm_4^T \mathbf{b}$ a $x$ je
+$pm_1^T \mathbf{b}$, přepíšeme první nerovnici:
 \begin{align*}
 -pm_4^T \mathbf{b} &\leq pm_1^T \mathbf{b} \\ 
 0 &\leq pm_1^T \mathbf{b} + pm_4^T \mathbf{b} \\
 0 &\leq (pm_1^T + pm_4^T) \mathbf{b} \\
 \end{align*}
 
-Poslední rovnice představuje rovnici první roviny pohledové pyramidy. Stejným způsobem zjistíme zbylých pět. 
-
-
-
-
+Poslední rovnice představuje rovnici první roviny pohledové pyramidy. Stejným
+způsobem zjistíme zbylých pět. 
 
 
 
@@ -312,6 +320,19 @@ vylepšením scény by bylo otexturování terénu na základě například vý�
 sklonu v daném bodě.  Dále jsem chtěl implementovat vyhlazování pomocí kubické
 b-spline křivky a porovnat s hotovou Catmull-Rom křivkou. 
 
+\begin{figure}[ht!]
+\centering
+	\includegraphics[width=15cm]{1.png}
+	\caption{Scéna - plný model}
+\end{figure}
+
+\begin{figure}[ht!]
+\centering
+	\includegraphics[width=15cm]{4.png}
+	\caption{Scéna - drátěný model}
+\end{figure}
+
+\clearpage
 
 \begin{thebibliography}{5}
 \bibitem[1]{rocks}

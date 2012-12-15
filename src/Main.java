@@ -20,7 +20,7 @@ public class Main {
 	private static final float METRES_PER_FLOAT = 2f;
 	private static final float MOVEMENT_SPEED = 3f / METRES_PER_FLOAT;
 	private static final float CAM_HEIGHT = 1.85f / METRES_PER_FLOAT;
-	private static final double DAY_LENGTH = 2 * 60;
+	private static final double DAY_LENGTH = 2 * 60 ;
 
 	private static final int V_SYNC = 60;
 
@@ -48,11 +48,11 @@ public class Main {
 
 	private static float sun_angle = 0f;
 	private static double day_time = 0f;
-	private static final float AMB_INT = .1f;
+	private static FloatBuffer ambientLightColor;
 	private static final float GRAVITY = 20f;
 	private static final float ATTENUATION = .8f;
 	private static final float JUMP = 5f * MOVEMENT_SPEED;
-	private static final float SPRINT = 5f;
+	private static final float SPRINT = 3f;
 
 	// main
 	public static void main(String[] args) {
@@ -68,8 +68,12 @@ public class Main {
 	private static void init() {
 		String dir = System.getProperty("user.dir");
 		String data_dir = dir + "/data";
+		if (dir.endsWith("bin") || dir.endsWith("bin/"))
+			data_dir = dir + "/data";
+
 		try {
-			System.setProperty("org.lwjgl.librarypath", data_dir + "/lib/natives");
+			System.setProperty("org.lwjgl.librarypath", data_dir
+					+ "/lib/natives");
 		} catch (UnsatisfiedLinkError e) {
 			System.err.println("Can not load native library.");
 			System.exit(1);
@@ -80,6 +84,7 @@ public class Main {
 			Display.setTitle("Pohoda na Sahare - Tomas Marsalek (A10B0632P) 2012");
 			Display.create();
 		} catch (LWJGLException e) {
+			System.err.println("Can not initialize display.");
 			System.exit(2);
 		} catch (UnsatisfiedLinkError e) {
 			System.err.println("Can not load native library.");
@@ -88,7 +93,8 @@ public class Main {
 
 		width = height = 128;
 		try {
-			t = new Terrain(new File(data_dir + "/mapa128x128.raw"), width, height);
+			t = new Terrain(new File(data_dir + "/mapa128x128.raw"), width,
+					height);
 		} catch (FileNotFoundException e) {
 			System.err.println("File not found");
 			System.exit(3);
@@ -101,7 +107,7 @@ public class Main {
 			t.loadTexture(data_dir + "/sand.png");
 		} catch (IOException e) {
 			System.err.println("Can not load texture.");
-//			System.exit(1);
+			// System.exit(1);
 		}
 
 		lastFrameTime = getTime();
@@ -121,9 +127,10 @@ public class Main {
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
 		glEnable(GL_LIGHT1);
-		glEnable(GL_LIGHT2);
-		glLightModel(GL_LIGHT_MODEL_AMBIENT, asFloatBuffer(new float[] { .02f,
-				.02f, .02f, 1f }));
+		// glLightModel(GL_LIGHT_MODEL_AMBIENT, asFloatBuffer(new float[] {
+		// .02f,
+		// .02f, .02f, 1f }));
+		ambientLightColor = asFloatBuffer(new float[] { .2f, .18f, .16f, 1f });
 
 		cam = new Vector3f(-64, 0, -64);
 		cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
@@ -150,15 +157,9 @@ public class Main {
 		glTranslatef(cam.x, cam.y, cam.z);
 
 		// Ambient light
-		glLight(GL_LIGHT1, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT * 1.1f,
-				AMB_INT, AMB_INT, 1f }));
+		glLight(GL_LIGHT1, GL_DIFFUSE, ambientLightColor);
 		glLight(GL_LIGHT1, GL_POSITION, asFloatBuffer(new float[] { width,
-				SUN_DISTANCE, height, 1f }));
-
-		glLight(GL_LIGHT2, GL_DIFFUSE, asFloatBuffer(new float[] { AMB_INT * 1.1f,
-				AMB_INT * 1.1f, AMB_INT, 1f }));
-		glLight(GL_LIGHT2, GL_POSITION, asFloatBuffer(new float[] { 0,
-				SUN_DISTANCE, height, 1f }));
+				width + height, height, 1f }));
 
 		// Sun
 		glPushMatrix();
@@ -174,7 +175,7 @@ public class Main {
 		glEnable(GL_LIGHTING);
 		glDisable(GL_POINT_SMOOTH);
 
-		float ri = (1 - AMB_INT) * si;
+		float ri = .5f * si;
 		glLight(GL_LIGHT0, GL_DIFFUSE, asFloatBuffer(new float[] { ri, ri,
 				.97f * ri, 1f }));
 		glLight(GL_LIGHT0, GL_AMBIENT, asFloatBuffer(new float[] { ri * .1f,
@@ -183,7 +184,6 @@ public class Main {
 				SUN_DISTANCE, 0f, 1f }));
 		glPopMatrix();
 
-		
 		// Render terrain
 		getClip();
 		glColor3f(1, 1, 1);
@@ -191,15 +191,12 @@ public class Main {
 		t.draw(-cam.x, -cam.z);
 		glDisable(GL_TEXTURE_2D);
 
-		
-		
-		
 		// MOVEMENT
 		int delta = getTimeDelta();
 		float time = (float) delta / 1000f;
 
 		float azimuth_rads = (float) Math.toRadians(azimuth);
-		
+
 		float movement_speed = MOVEMENT_SPEED;
 		if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT))
 			movement_speed *= SPRINT;
@@ -221,7 +218,7 @@ public class Main {
 		// GRAVITY
 		velocity.y -= -GRAVITY * time;
 
-		// this is distance = v * t
+		// distance = v * t
 		Vector3f distance = new Vector3f(velocity.x, velocity.y, velocity.z);
 		distance.scale(time);
 
@@ -239,9 +236,6 @@ public class Main {
 			inAir = false;
 			cam.y = Math.min(cam.y, -(collision + CAM_HEIGHT));
 		}
-
-		// height correction
-		// cam.y = -(CAM_HEIGHT + t.getY(-cam.x, -cam.z));
 
 		updateSun(delta);
 
@@ -263,7 +257,7 @@ public class Main {
 		handleWireframeMode();
 		handleVerticalInvert();
 
-//		printFPS(delta);
+		// printFPS(delta);
 
 		Display.update();
 		Display.sync(V_SYNC);
@@ -292,11 +286,12 @@ public class Main {
 		float[] p3 = product[3];
 		for (int i = 0; i < 3; i++) {
 			float[] p = product[i];
-			clipPlanes[i * 2] = new float[] {p3[0] + p[0], p3[1] + p[1], p3[2] + p[2], p3[3] + p[3]};
-			clipPlanes[i * 2 + 1] = new float[] {p3[0] - p[0], p3[1] - p[1], p3[2] - p[2], p3[3] - p[3]};
+			clipPlanes[i * 2] = new float[] { p3[0] + p[0], p3[1] + p[1],
+					p3[2] + p[2], p3[3] + p[3] };
+			clipPlanes[i * 2 + 1] = new float[] { p3[0] - p[0], p3[1] - p[1],
+					p3[2] - p[2], p3[3] - p[3] };
 		}
 	}
-
 
 	/**
 	 * smooth transition function for sun intensity
