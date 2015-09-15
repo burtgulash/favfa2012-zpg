@@ -9,6 +9,7 @@ Průchod pouštní krajinou vygenerovanou bitmapovým souborem za použití Open
   * Vyhlazování terénu pomocí technik Bilinearly blended patch mezi krajními Catmull-Rom křivkami
   * Adaptivní načítání terénu pomocí QuadTree algoritmu
   * Nezobrazování objektů mimo pohled hráče - View Frustrum Culling
+  * Denní osvětlení podle polohy "slunce"
   
 ## Přeložení a spuštění hry
 Pomocí ant skriptu (build.xml) stačí použít pár jednoduchých příkazů ke spuštění hry.
