@@ -4,7 +4,7 @@ Průchod pouštní krajinou vygenerovanou bitmapovým souborem za použití Open
 
 
 * Implementace v java 6 + [LWJGL - Lightweight Java Graphics Library](http://www.lwjgl.org/)
-* Dokumentace k předmětu - [doc.pdf](doc/doc.pdf)
+* Dokumentace k předmětu - [**doc.pdf**](doc/doc.pdf)
 * Featury
   * Vyhlazování terénu pomocí technik Bilinearly blended patch mezi krajními Catmull-Rom křivkami
   * Adaptivní načítání terénu pomocí QuadTree algoritmu
