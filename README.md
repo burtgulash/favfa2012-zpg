@@ -1,6 +1,7 @@
 # Základy počítačové grafiky - Pohoda na sahaře
 
-Průchod krajinou vygenerovanou bitmapovým souborem za použití OpenGL.
+Průchod pouštní krajinou vygenerovanou bitmapovým souborem za použití OpenGL.
+
 
 * Implementace v java 6 + [LWJGL - Lightweight Java Graphics Library](http://www.lwjgl.org/)
 * Dokumentace k předmětu - [doc.pdf](doc/doc.pdf)
@@ -23,6 +24,11 @@ ant run
 java -jar bin/ZPG_A10B0632P.jar
 ```
 
+## Screenshoty
+<p align="center">
+ <img width="49%" src="doc/1.png" alt="Pohoda na Sahaře" />
+ <img width="49%" src="doc/4.png" alt="Pohoda na Sahaře - wireframe" />
+</p>
 
 ## Detaily kurzu
 * KIV/ZPG - Základy počítačové grafiky
