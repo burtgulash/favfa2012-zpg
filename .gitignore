@@ -1,3 +1,6 @@
 *.class
 *.zip
 bin
+*.out
+*.log
+*.aux
